@@ -1,919 +1,625 @@
-# Continuous Infrastructure-as-Code Examples
+# TerraGoat - Vulnerable Terraform Infrastructure
 
-This repository demonstrates the practices of Continuous Infrastructure as Code
-(IaC) from [the companion white
-paper](https://github.com/EngineerBetter/iac-paper).
+[![Maintained by Bridgecrew.io](https://img.shields.io/badge/maintained%20by-bridgecrew.io-blueviolet)](https://bridgecrew.io/?utm_source=github&utm_medium=organic_oss&utm_campaign=terragoat)
+[![Infrastructure Tests](https://www.bridgecrew.cloud/badges/github/bridgecrewio/terragoat/general)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=bridgecrewio%2Fterragoat&benchmark=INFRASTRUCTURE+SECURITY)
+[![CIS Azure](https://www.bridgecrew.cloud/badges/github/bridgecrewio/terragoat/cis_azure)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=bridgecrewio%2Fterragoat&benchmark=CIS+AZURE+V1.1)
+[![CIS GCP](https://www.bridgecrew.cloud/badges/github/bridgecrewio/terragoat/cis_gcp)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=bridgecrewio%2Fterragoat&benchmark=CIS+GCP+V1.1)
+[![CIS AWS](https://www.bridgecrew.cloud/badges/github/bridgecrewio/terragoat/cis_aws)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=bridgecrewio%2Fterragoat&benchmark=CIS+AWS+V1.2)
+[![PCI](https://www.bridgecrew.cloud/badges/github/bridgecrewio/terragoat/pci)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=bridgecrewio%2Fterragoat&benchmark=PCI-DSS+V3.2)
+![Terraform Version](https://img.shields.io/badge/tf-%3E%3D0.12.0-blue.svg) 
+[![slack-community](https://img.shields.io/badge/Slack-4A154B?style=plastic&logo=slack&logoColor=white)](https://slack.bridgecrew.io/)
 
-* **Each practice is implemented in a commit** in the history of this
-  repository, so that you can see how the practices build on each other. We have
-  tagged each commit for easy reference.
-* Each practice also a **section in this document** to explain _why_ changes
-  were made in a particular way.
 
-Throughout the series of commits, we will build up a solid foundation for many
-Continuous IaC practices using [Make](https://www.gnu.org/software/make/),
-GitHub, Snyk and Jenkins, amongst other tools.
+TerraGoat is Bridgecrew's "Vulnerable by Design" Terraform repository.
+![Terragoat](terragoat-logo.png)
 
-## How to use this repository
+TerraGoat is Bridgecrew's "Vulnerable by Design" Terraform repository.
+TerraGoat is a learning and training project that demonstrates how common configuration errors can find their way into production cloud environments.
 
-You may wish to read the documentation and examples, and you may also wish to
-follow along and run them yourself.
+## Table of Contents
 
-### Reading
+* [Introduction](#introduction)
+* [Getting Started](#getting-started)
+  * [AWS](#aws-setup)
+  * [Azure](#azure-setup)
+  * [GCP](#gcp-setup)
+* [Contributing](#contributing)
+* [Support](#support)
 
-If you wish to **understand each practice** in isolation, you should **read
-through the commits in order**. This is the **recommended** approach. Each
-commit will implement one practice, and add documentation for it. No commits
-will change documentation for prior practices.
+## Introduction
 
-If you wish to see **only the finished pipeline**, then you should look at the
-latest commit.
+TerraGoat was built to enable DevSecOps design and implement a sustainable misconfiguration prevention strategy. It can be used to test a policy-as-code framework like [Bridgecrew](https://bridgecrew.io/?utm_source=github&utm_medium=organic_oss&utm_campaign=terragoat) & [Checkov](https://github.com/bridgecrewio/checkov/), inline-linters, pre-commit hooks or other code scanning methods.
 
-### Following along
+TerraGoat follows the tradition of existing *Goat projects that provide a baseline training ground to practice implementing secure development best practices for cloud infrastructure.
 
-We recommend that you [fork this
-repository](https://docs.github.com/en/github/getting-started-with-github/quickstart/fork-a-repo)
-so that you may make your own changes, and so that the Jenkins CI server that is
-introduced later can push commits to branches for the purpose of promoting
-changes between environments.
+## Important notes
 
-Once you have forked the repository, make a local clone of it.
+* **Where to get help:** the [Bridgecrew Community Slack](https://slack.bridgecrew.io/?utm_source=github&utm_medium=organic_oss&utm_campaign=terragoat)
 
-You can list all tags and navigate to a
-particular tag by running `git log --oneline` and `git checkout {tag_name}` (for
-example, `git checkout 01-starting`) respectively.
+Before you proceed please take a not of these warning:
+> :warning: TerraGoat creates intentionally vulnerable AWS resources into your account. **DO NOT deploy TerraGoat in a production environment or alongside any sensitive AWS resources.**
 
-You can return to the latest commit with `git checkout main`.
+## Requirements
 
-To get your Jenkins CI server to use your fork (rather than the original!) you
-will need to set an environment variable before setting your pipelines. This is
-because we can't know in advance what the Git URL of your fork will be. We'll
-assume that your fork is stored on GitHub.
+* Terraform 0.12
+* aws cli
+* azure cli
 
-#### Dependencies
+To prevent vulnerable infrastructure from arriving to production see: [Bridgecrew](https://bridgecrew.io/?utm_source=github&utm_medium=organic_oss&utm_campaign=terragoat) & [checkov](https://github.com/bridgecrewio/checkov/), the open source static analysis tool for infrastructure as code.
 
-To follow along you may need some or all of the tools used throughout the
-examples in this repository. Here's a list of everything used:
+## Getting started
 
-- `aws-cli` (`>=2.2.7`) - Use
-  [the official installation instructions](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- `aws-iam-authenticator` (`>=1.19.6`) - Use
-  [the official installation instructions](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html)
-- `terraform` (`1.15.4`) - we've used
-  [`tfenv`](https://github.com/tfutils/tfenv#installation) to install specific
-  versions of Terraform
-- `kubectl` (`>=1.21.1`) - Use
-  [the official installation instructions](https://kubernetes.io/docs/tasks/tools/)
-- `snyk` (`>=1.616.0`) - Use
-  [the official installation instructions](https://support.snyk.io/hc/en-us/articles/360003812538-Install-the-Snyk-CLI)
-- `tflint` (`>=0.28.1`) - Use
-  [the official installation instructions](https://github.com/terraform-linters/tflint#installation)
-- `docker` (latest version) - Use
-  [the official installation instructions](https://docs.docker.com/get-docker/)
-- `jre` (Java Runtime Environment, version 8) - Use
-  [the official installation instructions](https://www.oracle.com/uk/java/technologies/javase-jre8-downloads.html)
-- `golang` (`>=1.16.4`) - Use
-  [the official installation instructions](https://golang.org/doc/install)
-- `chromedriver` (`>=90.0.4430.24`) - Use
-  [the official installation instructions](https://chromedriver.chromium.org/downloads),
-  make sure to install version `90.*` and not `91.*`.
-- `conftest` (`>=0.25.0`) - Use
-  [the official installation instructions](https://www.conftest.dev/install/)
+### AWS Setup
 
-You may wish to install all of these tools now. Alternatively, you may install
-the tools as you encounter them (you'll need the `aws-iam-authenticator` for any
-`kubectl` commands).
+#### Installation (AWS)
 
-#### Jenkins CLI
+You can deploy multiple TerraGoat stacks in a single AWS account using the parameter `TF_VAR_environment`.
 
-The Jenkins CLI is required from step 7 onwards. It is installed by downloading
-the jar from your own Jenkins instance (instructions on setting up Jenkins
-follow if you don't have Jenkins CI yet).
+#### Create an S3 Bucket backend to keep Terraform state
 
-The jar is downloaded with:
+```bash
+export TERRAGOAT_STATE_BUCKET="mydevsecops-bucket"
+export TF_VAR_company_name=acme
+export TF_VAR_environment=mydevsecops
+export TF_VAR_region="us-west-2"
 
-```terminal
-curl -o jenkins-cli.jar {your_jenkins_host}/jnlpJars/jenkins-cli.jar
+aws s3api create-bucket --bucket $TERRAGOAT_STATE_BUCKET \
+    --region $TF_VAR_region --create-bucket-configuration LocationConstraint=$TF_VAR_region
+
+# Enable versioning
+aws s3api put-bucket-versioning --bucket $TERRAGOAT_STATE_BUCKET --versioning-configuration Status=Enabled
+
+# Enable encryption
+aws s3api put-bucket-encryption --bucket $TERRAGOAT_STATE_BUCKET --server-side-encryption-configuration '{
+  "Rules": [
+    {
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "aws:kms"
+      }
+    }
+  ]
+}'
 ```
 
-Store this jar wherever is convenient for you on your machine, we'll be using it
-later.
+#### Apply TerraGoat (AWS)
 
-#### Dependencies for a local Jenkins CI
+```bash
+cd terraform/aws/
+terraform init \
+-backend-config="bucket=$TERRAGOAT_STATE_BUCKET" \
+-backend-config="key=$TF_VAR_company_name-$TF_VAR_environment.tfstate" \
+-backend-config="region=$TF_VAR_region"
 
-If you don't already have a Jenkins CI installed the instructions for doing so
-are described in [JENKINS.md](/JENKINS.md) (although you won't need Jenkins
-until section 7). In addition to the steps in that section, you'll need the
-following tools installed:
-
-- `helm` (`>=3.0.0`) - Use
-  [the official installation instructions](https://helm.sh/docs/intro/install/)
-- `helmfile` (`>=0.139.7`) - Use
-  [the official installation instructions](https://github.com/roboll/helmfile#installation)
-- `helm-diff` - Use
-  [the official installation instructions](https://github.com/databus23/helm-diff#install)
-
-#### Allowing Jenkins to authenticate with GitHub
-
-Later Jenkins will need to be able to both clone your fork of this repository,
-and also push changes back to branches in your fork. To do this it will need to
-be able to authenticate with GitHub via a [deploy
-key](https://docs.github.com/en/developers/overview/managing-deploy-keys#deploy-keys).
-
-Create a new keypair in the `$HOME/.ssh/` directory:
-
-```terminal
-ssh-keygen -b 2048 -t rsa -f $HOME/.ssh/local-jenkins -q -N ""
+terraform apply
 ```
 
-Next, tell GitHub about the public half of the keypair:
+#### Remove TerraGoat (AWS)
 
-* Copy the entire contents of `$HOME/.ssh/local-jenkins.pub` to your paste
-  buffer
-* Visit your repository in GitHub
-* Visit the "Settings" page of your repository
-* Select "Deploy Keys" in the left-hand menu
-* Entire a title of "Local Jenkins" or any other name that will allow you to
-  remember what this key is
-* Paste the contents of the public key file into the large text box
-* Ensure you tick the "Allow write access" box, otherwise Jenkins will not be
-  able to push changes later
-
-Finally, tell Jenkins about the private half of the keypair:
-
-* Copy the entire contents of `$HOME/.ssh/local-jenkins` to your paste buffer
-* Log in to your Jenkins instance ([http://localhost](http://localhost)
-  `admin`/`p4ssw0rd` if you use [JENKINS.md](/JENKINS.md))
-* Visit the "Manage Jenkins" page
-* Select "Manage Credentials"
-* Select the "Jenkins Credential Provider"
-* Select "Global credentials"
-* Select "Add credentials"
-* Provide a "Username" and "ID" of `git`
-* Paste the contents of the private key file into the large text box (you may
-  need to click buttons for it to appear)
-* Click "Save"
-
-#### Snyk account and API token
-
-We'll be using Snyk's CLI tool to find misconfigurations. In addition to
-installing the CLI (instructions above), you'll need a Snyk account and a Snyk
-token.
-[Create a Snyk account](https://support.snyk.io/hc/en-us/articles/360017098237-Create-a-Snyk-account)
-and a
-[Snyk API token](https://support.snyk.io/hc/en-us/articles/360004008258-Authenticate-the-CLI-with-your-account)
-and make a note of your token, we'll need it later.
-
-## Practices
-
-Not all practices are represented in this repository, as some are non-technical.
-
-The below links will take you to the appropriate point in Git history for each
-practice.
-
-1. [The starting point](https://github.com/EngineerBetter/iac-example/tree/01-starting#the-starting-point)
-1. [Store `.tfstate` appropriately](https://github.com/EngineerBetter/iac-example/tree/02-store-tf-state#store-tfstate-appropriately)
-1. [Statically test IaC files](https://github.com/EngineerBetter/iac-example/tree/03-static-test#statically-test-iac-files)
-1. [Write files in a standardized way](https://github.com/EngineerBetter/iac-example/tree/04-linting-formatting#write-files-in-a-standardized-way)
-1. [Automatically format, lint and test before committing changes](https://github.com/EngineerBetter/iac-example/tree/05-pre-commit-hook#automatically-format-lint-and-test-before-committing-changes)
-1. [Dynamically test against environments](https://github.com/EngineerBetter/iac-example/tree/06-dynamic-test#dynamically-test-against-environments)
-1. [Automatically test and apply IaC](https://github.com/EngineerBetter/iac-example/tree/07-automatically-apply#automatically-test-and-apply-iac)
-1. [Make all jobs idempotent](https://github.com/EngineerBetter/iac-example/tree/08-idempotent#make-all-jobs-idempotent)
-1. [Continually apply IaC](https://github.com/EngineerBetter/iac-example/tree/09-converge#continually-apply-iac)
-1. [Alert on failures](https://github.com/EngineerBetter/iac-example/tree/10-alert#alert-on-failures)
-1. [Smoke-test deployed applications](https://github.com/EngineerBetter/iac-example/tree/11-smoke-test#smoke-test-deployed-applications)
-1. [Test that everything works together](https://github.com/EngineerBetter/iac-example/tree/12-integration-test#test-that-everything-works-together)
-1. [Record which versions work together](https://github.com/EngineerBetter/iac-example/tree/13-record-versions#record-which-versions-work-together)
-1. [Parameterize differences between environments](https://github.com/EngineerBetter/iac-example/tree/14-parameterise-environments#parameterize-differences-between-environments)
-1. [Promote change](https://github.com/EngineerBetter/iac-example/tree/15-promote#promote-change)
-
-### The starting point
-
-Many of the practice implementations are series of commands, chained together in
-shell scripts. In order to make these easy to use for engineers as well as easy
-to invoke from Jenkins, we've used a [Makefile](/Makefile). This is a file that
-is interpreted by the [GNU Make tool](https://www.gnu.org/software/make/).
-
-We chose to use Make because it is common and convenient, but you don't have
-to. You could save scripts in individual files, or even embed them in the
-pipeline definition. Make will be available by default on many systems.
-
-This repository has assumed the existence of some simple deployments that we'll
-build automation around. The first commit in this repository includes Terraform
-files for deploying a Kubernetes cluster to AWS, and a Kubernetes manifest to
-deploy the [Sock Shop](https://microservices-demo.github.io/) microservices
-application to that cluster.
-
-#### Following along
-
-```terminal
-# Set up environmental variables to authenticate to AWS.
-# You may instead store these in a `.envrc` file if using `direnv`.
-export AWS_ACCESS_KEY_ID={your_aws_access_key_id}
-export AWS_SECRET_ACCESS_KEY={your_aws_secret_access_key}
-
-# Deploy the Kubernetes cluster using Terraform. The first this this runs,
-# expect it to take between 15 - 25 minutes.
-make deploy-cluster
-
-# Get the Kubernetes config file you'll use to communicate with the Kubernetes
-# cluster.
-make fetch-cluster-config
-
-# Deploy the sock-shop microservice application to Kubernetes
-make deploy-sock-shop
-
-# Sock Shop may take a few minutes to deploy, but you can check its progress
-# with this command. You're finished with this section once Sock Shop reports
-# it is "Ready".
-kubectl --kubeconfig secrets/config-prod.yml get all -n sock-shop
+```bash
+terraform destroy
 ```
 
-### Store `.tfstate` appropriately
+#### Creating multiple TerraGoat AWS stacks
 
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/01-starting...02-store-tf-state)
+```bash
+cd terraform/aws/
+export TERRAGOAT_ENV=$TF_VAR_environment
+export TERRAGOAT_STACKS_NUM=5
+for i in $(seq 1 $TERRAGOAT_STACKS_NUM)
+do
+    export TF_VAR_environment=$TERRAGOAT_ENV$i
+    terraform init \
+    -backend-config="bucket=$TERRAGOAT_STATE_BUCKET" \
+    -backend-config="key=$TF_VAR_company_name-$TF_VAR_environment.tfstate" \
+    -backend-config="region=$TF_VAR_region"
 
-In the previous step, Terraform's state (where Terraform remembers what is
-deployed at the moment) was stored locally on disk in a `.tfstate` file that was
-ignored by Git. This change introduces a remote store for that state such that
-it is no longer kept on your workstation.
-
-A bootstrap Make target as been added (`make terraform-bootstrap`) that will
-create the following AWS resources to manage state remotely:
-
-1. A S3 bucket to store the `.tfstate` file
-1. A DynamoDB table that is used as a lock such that simultaneous changes to the
-   infrastructure are prevented
-
-#### Following along
-
-```terminal
-# Set up the following environmental variables for the remote state. You may store
-these in a `.envrc` file if using `direnv`.
-
-# The region where state resources are to be created, we used `eu-west-2`
-export BOOTSTRAP_AWS_REGION={your_aws_region}
-
-# The name of the S3 bucket to store state, such as `terraform_state`
-export BOOTSTRAP_BUCKET_NAME={your_aws_bucket_name}
-
-# The DynamoDB table name used for locking, such as `terraform_lock`
-export BOOTSTRAP_DYNAMO_TABLE_NAME={your_dynamodb_table}
-
-# Create the bucket and locking table, the AWS CLI may display output to the
-# screen that you can dismiss by pressing `q`. Note that this script will fail
-# if run multiple times, we'll address this later.
-make terraform-bootstrap
-
-# Initializing again will configure your remote Terraform backend. You should
-# be prompted to decide if you'd like to migrate your local state to the S3
-# bucket, which you absolutely do.
-make terraform-init
-
-# Remove the now unnecessary local state files.
-rm terraform/deployments/cluster-prod/*.tfstate
-rm terraform/deployments/cluster-prod/*.tfstate.backup
-
-# Running deploy again should validate that nothing is going to change even
-# though we've changed where state is stored.
-make deploy-cluster
-
-# You're now finished with this section.
+    terraform apply -auto-approve
+done
 ```
 
-### Statically test IaC files
+#### Deleting multiple TerraGoat stacks (AWS)
 
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/02-store-tf-state...03-static-test)
+```bash
+cd terraform/aws/
+export TF_VAR_environment = $TERRAGOAT_ENV
+for i in $(seq 1 $TERRAGOAT_STACKS_NUM)
+do
+    export TF_VAR_environment=$TERRAGOAT_ENV$i
+    terraform init \
+    -backend-config="bucket=$TERRAGOAT_STATE_BUCKET" \
+    -backend-config="key=$TF_VAR_company_name-$TF_VAR_environment.tfstate" \
+    -backend-config="region=$TF_VAR_region"
 
-In order to improve confidence in the correctness and safety of the resources
-deployed by Terraform and Kubernetes, static testing is introduced. Make sure
-your have your Snyk API token to hand that
-[you created earlier](https://github.com/EngineerBetter/iac-example#snyk-account-and-api-token).
-
-#### Following along
-
-```terminal
-# Used by the Snyk CLI for authentication when performing scans
-export SNYK_TOKEN={your_snyk_token}
-
-# Using the Terraform CLI, this task checks our Terraform files for correctness
-# and whether or not we're using deprecated Terraform features.
-make terraform-validate
-
-# This target uses Snyk to determine whether misconfigurations in the Terraform
-# definitions would result in issues (such as security issues leading to
-# exposure to risk).
-make snyk-test-terraform
-
-# This target uses the Snyk tool to perform a similar check against the
-# deployment manifest we used to deploy Sock Shop to Kubernetes. This target
-# will likely fail as there are issues with the Sock Shop manifest. We'll
-# ignore failure here for the time being but note that there are configuration
-# issues with this manifest identified by Snyk.
-make snyk-test-deployments
-
-# This is a convenience target that'll run the above three targets sequentially.
-make test
+    terraform destroy -auto-approve
+done
 ```
 
-It is advisable to run `make test` prior to applying any changes to your
-infrastructure or application to increase your confidence. Later, it will be
-demonstrated how this may be automated.
+### Azure Setup
 
-### Write files in a standardized way
+#### Installation (Azure)
 
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/03-static-test...04-linting-formatting)
+You can deploy multiple TerraGoat stacks in a single Azure subscription using the parameter `TF_VAR_environment`.
 
-Keeping code standardized will improve readability of the files. We can enforce
-standardization using tools that are triggered by Make for convenience.
+#### Create an Azure Storage Account backend to keep Terraform state
 
-#### Following along
+```bash
+export TERRAGOAT_RESOURCE_GROUP="TerraGoatRG"
+export TERRAGOAT_STATE_STORAGE_ACCOUNT="mydevsecopssa"
+export TERRAGOAT_STATE_CONTAINER="mydevsecops"
+export TF_VAR_environment="dev"
+export TF_VAR_region="westus"
 
-```terminal
-# This target uses Terraform's `fmt` subcommand to indicate when files are
-# formatted in a non-standard way. If it finds a formatting issue then it'll
-# fail and tell you what you need to do to fix it.
-make terraform-fmt-check
+# Create resource group
+az group create --location $TF_VAR_region --name $TERRAGOAT_RESOURCE_GROUP
 
-# There are no formatting errors in the files, so the tool exits without error.
-# You can prove this by printing the exit code of the last command, which will be
-# 0.
-echo $?
+# Create storage account
+az storage account create --name $TERRAGOAT_STATE_STORAGE_ACCOUNT --resource-group $TERRAGOAT_RESOURCE_GROUP --location $TF_VAR_region --sku Standard_LRS --kind StorageV2 --https-only true --encryption-services blob
 
-# This target uses tflint to to provide faster feedback for errors that are
-# _syntactically_ correct but _semantically_ incorrect (such as asking AWS to
-# create an instance type that does not exist).
-make terraform-lint
+# Get storage account key
+ACCOUNT_KEY=$(az storage account keys list --resource-group $TERRAGOAT_RESOURCE_GROUP --account-name $TERRAGOAT_STATE_STORAGE_ACCOUNT --query [0].value -o tsv)
+
+# Create blob container
+az storage container create --name $TERRAGOAT_STATE_CONTAINER --account-name $TERRAGOAT_STATE_STORAGE_ACCOUNT --account-key $ACCOUNT_KEY
 ```
 
-Try making edits to the files before running the checks again, to see if you can
-get them to output a warning.
+#### Apply TerraGoat (Azure)
 
-Seeing these commands pass successfully concludes this section. For convenience,
-both of these two tests are run within the existing target `make test`.
+```bash
+cd terraform/azure/
+terraform init -reconfigure -backend-config="resource_group_name=$TERRAGOAT_RESOURCE_GROUP" \
+    -backend-config "storage_account_name=$TERRAGOAT_STATE_STORAGE_ACCOUNT" \
+    -backend-config="container_name=$TERRAGOAT_STATE_CONTAINER" \
+    -backend-config "key=$TF_VAR_environment.terraform.tfstate"
 
-### Automatically format, lint and test before committing changes
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/04-linting-formatting...05-pre-commit-hook)
-
-Until now, the person making changes had to remember to to run tests and checks
-prior to applying changes to either Terraform or Kubernetes. In this change, [a
-pre-commit hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) is
-configured such that fast tests are run automatically when checking in new
-changes to Git.
-
-#### Following along
-
-```terminal
-# Configure the pre-commit hook. After running this, each time a commit is made
-# Git will run the targets `terraform-validate`, `terraform-lint` and
-# `terraform-fmt-check`. Only these tests are run because they are fast.
-make configure-pre-commit-hook
-
-# Try making a simple commit to see the hook trigger.
-touch a-new-file
-git add a-new-file
-git commit -m "testing the pre-commit hook"
-
-# You'll see the tests running automatically.
+terraform apply
 ```
 
-Having configured your pre-commit hook, you've finished this section.
+#### Remove TerraGoat (Azure)
 
-#### Removing the Git hook
-
-You may wish to remove the git hook in future or disable it temporarily. To
-remove the hook run `rm .git/hooks/pre-commit`. It can be re-enabled by running
-`make configure-pre-commit-hook` again.
-
-### Dynamically test against environments
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/05-pre-commit-hook...06-dynamic-test)
-
-To further increase confidence in the infrastructure being deployed, this change
-makes use of Snyk's Terraform plan-scanning feature.
-
-Rather than immediately applying changes to infrastructure, a plan is now
-generated first and scanned by Snyk before applying those changes. If Snyk finds
-issues with the generated plan then the deployment is aborted.
-
-#### Following along
-
-```terminal
-# Running this target now makes use of Snyk's IaC plan scanning. This will
-# likely fail when run and output useful information about properly configuring
-# the Terraform files.
-make deploy-cluster
-
-# Since we still need to deploy to production despite issues that may already
-# exist there, we've added a toggle to not consider finding configuration issues
-# an error, but merely report on issues found.
-IGNORE_SNYK_TEST_PLAN_FAILURE=true make deploy-cluster
+```bash
+terraform destroy
 ```
 
-This concludes this section, where deploys with the feature toggle should report
-no deployment changes, but warn about configuration issues.
+### GCP Setup
 
-### Automatically test and apply IaC
+#### Installation (GCP)
 
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/06-dynamic-test...07-automatically-apply)
+You can deploy multiple TerraGoat stacks in a single GCP project using the parameter `TF_VAR_environment`.
 
-Prior to this change, deployments and tests have been run locally on development
-machines. This presents a few issues, the most important of which being that an
-engineer making deploys could forget to run tests prior to deploying and that
-it's difficult for other contributors to see what was deployed recently.
+#### Create a GCS backend to keep Terraform state
 
-To address these issues, Jenkins CI pipelines have been introduced. The Make
-targets that have been used for deploys and tests are run automatically whenever
-Jenkins detects a code change.
+To use terraform, a Service Account and matching set of credentials are required.
+If they do not exist, they must be manually created for the relevant project.
+To create the Service Account:
+1. Sign into your GCP project, go to `IAM` > `Service Accounts`.
+2. Click the `CREATE SERVICE ACCOUNT`.
+3. Give a name to your service account (for example - `terragoat`) and click `CREATE`.
+4. Grant the Service Account the `Project` > `Editor` role and click `CONTINUE`.
+5. Click `DONE`.
 
-Each time a commit is pushed to this repository, the `Deploy` pipeline is
-triggered. This pipeline does the following each time it is run, in this order:
+To create the credentials:
+1. Sign into your GCP project, go to `IAM` > `Service Accounts` and click on the relevant Service Account.
+2. Click `ADD KEY` > `Create new key` > `JSON` and click `CREATE`. This will create a `.json` file and download it to your computer.
 
-1. Run `make terraform-init`
-2. In parallel, run:
-   - `make terraform-validate`
-   - `make terraform-lint`
-   - `make terraform-fmt-check`
-   - `make snyk-test-terraform`
-   - `make snyk-test-deployments`
-3. Run `make deploy-cluster`
-4. Run `make deploy-sock-shop`
+We recommend saving the key with a nicer name than the auto-generated one (i.e. `terragoat_credentials.json`), and storing the resulting JSON file inside `terraform/gcp` directory of terragoat.
+Once the credentials are set up, create the BE configuration as follows:
 
-At each push to this repository, all tests are run, the Kubernetes cluster is
-deployed and the Sock Shop application is deployed. By using this, we need not
-fear that we forget to run tests prior to making changes to the infrastructure.
-We also now have a view of the history of changes through Jenkins CI build
-history.
+```bash
+export TF_VAR_environment="dev"
+export TF_TERRAGOAT_STATE_BUCKET=remote-state-bucket-terragoat
+export TF_VAR_credentials_path=<PATH_TO_CREDNETIALS_FILE> # example: export TF_VAR_credentials_path=terragoat_credentials.json
+export TF_VAR_project=<YOUR_PROJECT_NAME_HERE>
 
-A `Destroy` pipeline has also been created. This pipeline is disabled
-by default to prevent accidental running, as its role is to destroy the
-application and Kubernetes cluster. While you're unlikely to want to do this
-for your production deployments, this functionality will become useful in later
-commits when we look at using multiple environments.
-
-#### Following along
-
-You may already have access to a running Jenkins instance. If you don't, please
-follow the instructions in [JENKINS.md](/JENKINS.md) to deploy Jenkins locally.
-
-In order to run our Make targets in Jenkins, we'll need to let Jenkins know
-about a few credentials. Refer to the
-[Jenkins documentation for configuring credentials](https://www.jenkins.io/doc/book/using/using-credentials/).
-Below are a list of credentials we'll need, including their key and type. Their
-values are the same as those you've already configured in earlier steps.
-
-| Key                         | Type        |
-|-----------------------------|-------------|
-| SNYK_TOKEN                  | Secret text |
-| AWS_ACCESS_KEY_ID           | Secret text |
-| AWS_SECRET_ACCESS_KEY       | Secret text |
-| BOOTSTRAP_AWS_REGION        | Secret text |
-| BOOTSTRAP_BUCKET_NAME       | Secret text |
-| BOOTSTRAP_DYNAMO_TABLE_NAME | Secret text |
-
-```terminal
-# In order to create pipelines in our Jenkins instance, we'll need to set a few
-# environment variables.
-# You may instead store these in a `.envrc` file if using `direnv`.
-
-# If you've forked this repo, these variables are used to instruct Jenkins on
-# where it can find your fork.
-# If different from "EngineerBetter":
-export GITHUB_ORG={your_github_org}
-# If different from "iac-example":
-export GITHUB_REPOSITORY={your_github_repository}
-
-# The Make targets we're about to use need to use the Jenkins CLI so we set this
-# to enable the target to find it.
-export JENKINS_CLI={your_cli_path}
-
-# The following variables are used to communicate and authenticate with Jenkins.
-
-# The URL to your Jenkins instance, if you used JENKINS.md then its value should
-# be `http://localhost/`.
-export JENKINS_URL={your_jenkins_url}
-
-# The following are the Jenkins credentials, if you used JENKINS.md then their
-# values are `admin` and `p4ssw0rd` respectively.
-export JENKINS_USERNAME={your_jenkins_username}
-export JENKINS_PASSWORD={your_jenkins_password}
-
-# The following will create two declarative pipelines (see
-# https://www.jenkins.io/doc/book/pipeline/syntax/) in Jenkins - one for
-# deploying the infrastructure and one for destroying it. After running these
-# commands, this section is concluded.
-make jenkins-create-deploy-pipeline
-make jenkins-create-destroy-pipeline
+# Create storage bucket
+gsutil mb gs://${TF_TERRAGOAT_STATE_BUCKET}
 ```
 
-Explore the Jenkins web user interface to see your newly-created pipelines. You
-can trigger a build to see them in action.
+#### Apply TerraGoat (GCP)
 
-#### Notes: Updating the pipelines
+```bash
+cd terraform/gcp/
+terraform init -reconfigure -backend-config="bucket=$TF_TERRAGOAT_STATE_BUCKET" \
+    -backend-config "credentials=$TF_VAR_credentials_path" \
+    -backend-config "prefix=terragoat/${TF_VAR_environment}"
 
-The first time we created the Jenkins pipelines, we used the commands just
-above. If you need to modify and set the pipelines again, you should use the
-Make targets `jenkins-update-deploy-pipeline` and
-`jenkins-update-destroy-pipeline`. This is because Jenkins' CLI has no way to
-"create a pipeline _or_ update it if it already exists" - they are separate
-operations.
-
-Pipeline metadata lives in [deploy.Jenkinsfile](/pipelines/deploy.Jenkinsfile)
-and [destroy.Jenkinsfile](/pipelines/destroy.Jenkinsfile). Since it can be
-difficult to read and change XML files, it's recommended you make any changes
-you need to make to pipeline metadata in the Jenkins UI and use the Jenkins CLI
-to get the pipeline definition, updating the XML files with the newly generated
-ones:
-
-```terminal
-java -jar \
-  $JENKINS_CLI \
-  -s $JENKINS_URL \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  get-job 'Deploy (prod)' \
-  > pipelines/deploy.xml
+terraform apply
 ```
 
-#### Notes: Docker images
+#### Remove TerraGoat (GCP)
 
-Our pipelines use Kubernetes agents to run their workloads. We've provided a
-Docker image that the pipelines already know about (engineerbetter/iac-example).
-
-If you wish to create your own Docker images for use by modifying the Dockerfile
-in this repository, you can run
-`docker build . -t {your_image_repository}/{your_image_name}:{your_image_tag}`
-to build the image and
-`docker push {your_image_repository}/{your_image_name}:{your_image_tag}` to push
-the image.
-
-Refer to the
-[Dockerhub getting started guide](https://docs.docker.com/docker-hub/) (or the
-documentation for whatever image repository you use).
-
-If you have built your own image and wish to use it, make sure you replace the
-image references in both [deploy.Jenkinsfile](/pipelines/deploy.Jenkinsfile) and
-[destroy.Jenkinsfile](/pipelines/destroy.Jenkinsfile). You can retrieve the
-SHA256 of your image with
-`docker image inspect {your_image_repository}/{your_image_name}:{your_image_tag}`
-and looking for the "RepoDigests".
-
-### Make all jobs idempotent
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/07-automatically-apply...08-idempotent)
-
-When Jenkins CI was introduced in the previous commit, we automated almost
-everything. One thing that was missing was the 'bootstrap' Make target which
-created the AWS resources required for the Terraform backend. That target only
-works the first time it is run: if the resources already exist, it errors.
-
-In this commit we make the bootstrap Make target idempotent so that it may be
-safely run in CI along with all other Make targets, automating what was
-previously a manual step.
-
-Prior to creating the bootstrap S3 bucket and DynamoDB table, the script now
-checks if they already exist, so that it does not fail if they are already
-there. With this change it is now safe to run that target repeatedly and be sure
-that the end state will be the same.
-
-Given this new safety, this step is introduced into the CI pipeline in Jenkins,
-removing a dependency on what was previously a manual step.
-
-#### Following along
-
-Our Jenkins pipeline is currently configured to build from a specific tag (the
-tag of the last step). We need to tell Jenkins that it should now be looking at
-_this_ tag.
-
-Unfortunately Jenkins has a bug which means that it might not 'notice' that the
-tag it is being told to watch has changed. Triggering a build does force it to
-recognise that it is configured to watch a new tag.
-
-You will need to update your pipeline definitions, and also trigger a build to
-force it to update.
-
-```terminal
-# Update the pipelines
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-
-# Trigger a build
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
+```bash
+terraform destroy
 ```
 
-### Continually apply IaC
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/08-idempotent...09-converge)
-
-The pipeline is now triggered at least once per hour, even if nothing changes.
-This is safe to do since our tasks are now idempotent and running the pipeline
-repeatedly ought to result in the same outcome.
-
-This change ensures that manual changes are overwritten at least every hour,
-encouraging change to move through CI via Git commits.
-
-#### Following along
-
-```terminal
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-```
-
-Visit the [Deploy (prod)](http://localhost/job/Deploy%20(prod)/configure)
-configuration page, and see that there are now settings for an hourly build
-trigger.
-
-### Alert on failures
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/09-converge...10-alert)
-
-Prior to this change, failures in CI would only be visible by inspecting the
-Jenkins build history. This is fine when people are constantly checking Jenkins
-but that isn't always a realistic approach. Important information ought to be
-_pushed_ to the those who need to know it rather than expecting those people to
-be constantly checking for it.
-
-In this commit, our pipelines are configured to alert to a Slack channel with a
-link to the failing build, grabbing the attention of those able to fix the issue
-and ensuring the pipeline is failing for a smaller window of time.
-
-To enable Jenkins to post to Slack, you'll need to configure a Jenkins
-credential `SLACK_WEBHOOK_CREDENTIAL` of type "secret text". Configuring Jenkins
-credentials was covered in
-[Automatically test and apply IaC](https://github.com/EngineerBetter/iac-example/tree/10-alert#automatically-test-and-apply-iac).
-The value for this secret is created by following
-[Slack's tutorial on setting up webhooks](https://slack.com/intl/en-gb/help/articles/115005265063-Incoming-webhooks-for-Slack).
-
-#### Following along
-
-You will need to update your pipeline definitions for the alerting configuration to take effect:
-
-```terminal
-# Configure the slack channel that failures are reported to.
-# You may instead store these in a `.envrc` file if using `direnv`.
-export SLACK_CHANNEL={your_alerts_channel}
-
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-```
-
-### Smoke-test deployed applications
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/10-alert...11-smoke-test)
-
-Smoke tests are often used to get fast feedback on whether deployed systems are
-functioning as they expect. While not rigorous tests, they often answer the
-question "is something on fire?". In this commit, we introduce smoke tests after
-our infrastructure is deployed to increase our confidence that things are
-functioning as expected.
-
-We've leveraged functionality in Kubernetes to achieve rudimentary smoke tests -
-we've defined a readiness probe on the front end of Sock Shop that expects a
-`200 OK` response when fetching the landing page content.
-
-In addition, when deploying Sock Shop, we use `kubectl` to wait for all pods and
-resources to report that they are `ready`. Previously this wasn't checked for
-and we'd not have known that deploying Sock Shop had failed.
-
-#### Following along
-
-```terminal
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-```
-
-Triggering the "Deploy (prod)" pipeline and observing the "Deploy Sock
-Shop" stage should indicate that the pipeline waited until the pods reported
-they were ready (that pods were deployed and their readiness probes were
-successful).
-
-You can validate that the script waited for readiness probes to return
-successfully by looking for a number of lines containing `condition met` in the
-build output.
-
-### Test that everything works together
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/11-smoke-test...12-integration-test)
+## Bridgecrew's IaC herd of goats
+
+* [CfnGoat](https://github.com/bridgecrewio/cfngoat) - Vulnerable by design Cloudformation template
+* [TerraGoat](https://github.com/bridgecrewio/terragoat) - Vulnerable by design Terraform stack
+* [CDKGoat](https://github.com/bridgecrewio/cdkgoat) - Vulnerable by design CDK application
+* [kustomizegoat](https://github.com/bridgecrewio/kustomizegoat) - Vulnerable by design kustomize deployment
+## Contributing
+
+Contribution is welcomed!
+
+We would love to hear about more ideas on how to find vulnerable infrastructure-as-code design patterns.
+
+## Support
+
+[Bridgecrew](https://bridgecrew.io/?utm_source=github&utm_medium=organic_oss&utm_campaign=terragoat) builds and maintains TerraGoat to encourage the adoption of policy-as-code.
+
+If you need direct support you can contact us at [info@bridgecrew.io](mailto:info@bridgecrew.io).
+
+## Existing vulnerabilities (Auto-Generated)
+### terraform scan results:
+
+|     | check_id      | file                          | resource                                                | check_name                                                                                                                                                   | guideline                                                                                                                                    |
+|-----|---------------|-------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+|   0 | CKV_ALI_10    | /alicloud/bucket.tf           | alicloud_oss_bucket.bad_bucket                          | Ensure OSS bucket has versioning enabled                                                                                                                     |                                                                                                                                              |
+|   1 | CKV_ALI_12    | /alicloud/bucket.tf           | alicloud_oss_bucket.bad_bucket                          | Ensure the OSS bucket has access logging enabled                                                                                                             |                                                                                                                                              |
+|   2 | CKV_ALI_11    | /alicloud/bucket.tf           | alicloud_oss_bucket.bad_bucket                          | Ensure OSS bucket has transfer Acceleration enabled                                                                                                          |                                                                                                                                              |
+|   3 | CKV_ALI_1     | /alicloud/bucket.tf           | alicloud_oss_bucket.bad_bucket                          | Alibaba Cloud OSS bucket accessible to public                                                                                                                |                                                                                                                                              |
+|   4 | CKV_ALI_6     | /alicloud/bucket.tf           | alicloud_oss_bucket.bad_bucket                          | Ensure OSS bucket is encrypted with Customer Master Key                                                                                                      |                                                                                                                                              |
+|   5 | CKV_ALI_36    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance has log_disconnections enabled                                                                                                           |                                                                                                                                              |
+|   6 | CKV_ALI_37    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance has log_connections enabled                                                                                                              |                                                                                                                                              |
+|   7 | CKV_ALI_34    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance is set to auto upgrade minor versions                                                                                                    |                                                                                                                                              |
+|   8 | CKV_ALI_20    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance uses SSL                                                                                                                                 |                                                                                                                                              |
+|   9 | CKV_ALI_30    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance auto upgrades for minor versions                                                                                                         |                                                                                                                                              |
+|  10 | CKV_ALI_35    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS instance has log_duration enabled                                                                                                                 |                                                                                                                                              |
+|  11 | CKV_ALI_9     | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure database instance is not public                                                                                                                       |                                                                                                                                              |
+|  12 | CKV_ALI_25    | /alicloud/rds.tf              | alicloud_db_instance.seeme                              | Ensure RDS Instance SQL Collector Retention Period should be greater than 180                                                                                |                                                                                                                                              |
+|  13 | CKV_ALI_4     | /alicloud/trail.tf            | alicloud_actiontrail_trail.fail                         | Ensure Action Trail Logging for all regions                                                                                                                  |                                                                                                                                              |
+|  14 | CKV_ALI_5     | /alicloud/trail.tf            | alicloud_actiontrail_trail.fail                         | Ensure Action Trail Logging for all events                                                                                                                   |                                                                                                                                              |
+|  15 | CKV_ALI_10    | /alicloud/trail.tf            | alicloud_oss_bucket.trail                               | Ensure OSS bucket has versioning enabled                                                                                                                     |                                                                                                                                              |
+|  16 | CKV_ALI_12    | /alicloud/trail.tf            | alicloud_oss_bucket.trail                               | Ensure the OSS bucket has access logging enabled                                                                                                             |                                                                                                                                              |
+|  17 | CKV_ALI_11    | /alicloud/trail.tf            | alicloud_oss_bucket.trail                               | Ensure OSS bucket has transfer Acceleration enabled                                                                                                          |                                                                                                                                              |
+|  18 | CKV_ALI_6     | /alicloud/trail.tf            | alicloud_oss_bucket.trail                               | Ensure OSS bucket is encrypted with Customer Master Key                                                                                                      |                                                                                                                                              |
+|  19 | CKV_AWS_157   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure that RDS instances have Multi-AZ enabled                                                                                                              | https://docs.bridgecrew.io/docs/general_73                                                                                                   |
+|  20 | CKV_AWS_161   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure RDS database has IAM authentication enabled                                                                                                           | https://docs.bridgecrew.io/docs/ensure-rds-database-has-iam-authentication-enabled                                                           |
+|  21 | CKV_AWS_16    | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure all data stored in the RDS is securely encrypted at rest                                                                                              | https://docs.bridgecrew.io/docs/general_4                                                                                                    |
+|  22 | CKV_AWS_226   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure DB instance gets all minor upgrades automatically                                                                                                     |                                                                                                                                              |
+|  23 | CKV_AWS_17    | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure all data stored in RDS is not publicly accessible                                                                                                     | https://docs.bridgecrew.io/docs/public_2                                                                                                     |
+|  24 | CKV_AWS_118   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure that enhanced monitoring is enabled for Amazon RDS instances                                                                                          | https://docs.bridgecrew.io/docs/ensure-that-enhanced-monitoring-is-enabled-for-amazon-rds-instances                                          |
+|  25 | CKV_AWS_129   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure that respective logs of Amazon Relational Database Service (Amazon RDS) are enabled                                                                   | https://docs.bridgecrew.io/docs/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled                     |
+|  26 | CKV_AWS_133   | /aws/db-app.tf                | aws_db_instance.default                                 | Ensure that RDS instances has backup policy                                                                                                                  | https://docs.bridgecrew.io/docs/ensure-that-rds-instances-have-backup-policy                                                                 |
+|  27 | CKV_AWS_23    | /aws/db-app.tf                | aws_security_group.default                              | Ensure every security groups rule has a description                                                                                                          | https://docs.bridgecrew.io/docs/networking_31                                                                                                |
+|  28 | CKV_AWS_23    | /aws/db-app.tf                | aws_security_group_rule.ingress                         | Ensure every security groups rule has a description                                                                                                          | https://docs.bridgecrew.io/docs/networking_31                                                                                                |
+|  29 | CKV_AWS_23    | /aws/db-app.tf                | aws_security_group_rule.egress                          | Ensure every security groups rule has a description                                                                                                          | https://docs.bridgecrew.io/docs/networking_31                                                                                                |
+|  30 | CKV_AWS_79    | /aws/db-app.tf                | aws_instance.db_app                                     | Ensure Instance Metadata Service Version 1 is not enabled                                                                                                    | https://docs.bridgecrew.io/docs/bc_aws_general_31                                                                                            |
+|  31 | CKV_AWS_135   | /aws/db-app.tf                | aws_instance.db_app                                     | Ensure that EC2 is EBS optimized                                                                                                                             | https://docs.bridgecrew.io/docs/ensure-that-ec2-is-ebs-optimized                                                                             |
+|  32 | CKV_AWS_8     | /aws/db-app.tf                | aws_instance.db_app                                     | Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted                                                    | https://docs.bridgecrew.io/docs/general_13                                                                                                   |
+|  33 | CKV_AWS_126   | /aws/db-app.tf                | aws_instance.db_app                                     | Ensure that detailed monitoring is enabled for EC2 instances                                                                                                 | https://docs.bridgecrew.io/docs/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances                                                 |
+|  34 | CKV_AWS_79    | /aws/ec2.tf                   | aws_instance.web_host                                   | Ensure Instance Metadata Service Version 1 is not enabled                                                                                                    | https://docs.bridgecrew.io/docs/bc_aws_general_31                                                                                            |
+|  35 | CKV_AWS_135   | /aws/ec2.tf                   | aws_instance.web_host                                   | Ensure that EC2 is EBS optimized                                                                                                                             | https://docs.bridgecrew.io/docs/ensure-that-ec2-is-ebs-optimized                                                                             |
+|  36 | CKV_AWS_8     | /aws/ec2.tf                   | aws_instance.web_host                                   | Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted                                                    | https://docs.bridgecrew.io/docs/general_13                                                                                                   |
+|  37 | CKV_AWS_46    | /aws/ec2.tf                   | aws_instance.web_host                                   | Ensure no hard-coded secrets exist in EC2 user data                                                                                                          | https://docs.bridgecrew.io/docs/bc_aws_secrets_1                                                                                             |
+|  38 | CKV_AWS_126   | /aws/ec2.tf                   | aws_instance.web_host                                   | Ensure that detailed monitoring is enabled for EC2 instances                                                                                                 | https://docs.bridgecrew.io/docs/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances                                                 |
+|  39 | CKV_AWS_3     | /aws/ec2.tf                   | aws_ebs_volume.web_host_storage                         | Ensure all data stored in the EBS is securely encrypted                                                                                                      | https://docs.bridgecrew.io/docs/general_3-encrypt-eps-volume                                                                                 |
+|  40 | CKV_AWS_189   | /aws/ec2.tf                   | aws_ebs_volume.web_host_storage                         | Ensure EBS Volume is encrypted by KMS using a customer managed Key (CMK)                                                                                     | https://docs.bridgecrew.io/docs/bc_aws_general_109                                                                                           |
+|  41 | CKV_AWS_23    | /aws/ec2.tf                   | aws_security_group.web-node                             | Ensure every security groups rule has a description                                                                                                          | https://docs.bridgecrew.io/docs/networking_31                                                                                                |
+|  42 | CKV_AWS_260   | /aws/ec2.tf                   | aws_security_group.web-node                             | Ensure no security groups allow ingress from 0.0.0.0:0 to port 80                                                                                            |                                                                                                                                              |
+|  43 | CKV_AWS_24    | /aws/ec2.tf                   | aws_security_group.web-node                             | Ensure no security groups allow ingress from 0.0.0.0:0 to port 22                                                                                            | https://docs.bridgecrew.io/docs/networking_1-port-security                                                                                   |
+|  44 | CKV_AWS_130   | /aws/ec2.tf                   | aws_subnet.web_subnet                                   | Ensure VPC subnets do not assign public IP by default                                                                                                        | https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default                                                        |
+|  45 | CKV_AWS_130   | /aws/ec2.tf                   | aws_subnet.web_subnet2                                  | Ensure VPC subnets do not assign public IP by default                                                                                                        | https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default                                                        |
+|  46 | CKV_AWS_136   | /aws/ecr.tf                   | aws_ecr_repository.repository                           | Ensure that ECR repositories are encrypted using KMS                                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-ecr-repositories-are-encrypted                                                                   |
+|  47 | CKV_AWS_51    | /aws/ecr.tf                   | aws_ecr_repository.repository                           | Ensure ECR Image Tags are immutable                                                                                                                          | https://docs.bridgecrew.io/docs/bc_aws_general_24                                                                                            |
+|  48 | CKV_AWS_163   | /aws/ecr.tf                   | aws_ecr_repository.repository                           | Ensure ECR image scanning on push is enabled                                                                                                                 | https://docs.bridgecrew.io/docs/general_8                                                                                                    |
+|  49 | CKV_AWS_130   | /aws/eks.tf                   | aws_subnet.eks_subnet1                                  | Ensure VPC subnets do not assign public IP by default                                                                                                        | https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default                                                        |
+|  50 | CKV_AWS_130   | /aws/eks.tf                   | aws_subnet.eks_subnet2                                  | Ensure VPC subnets do not assign public IP by default                                                                                                        | https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default                                                        |
+|  51 | CKV_AWS_39    | /aws/eks.tf                   | aws_eks_cluster.eks_cluster                             | Ensure Amazon EKS public endpoint disabled                                                                                                                   | https://docs.bridgecrew.io/docs/bc_aws_kubernetes_2                                                                                          |
+|  52 | CKV_AWS_38    | /aws/eks.tf                   | aws_eks_cluster.eks_cluster                             | Ensure Amazon EKS public endpoint not accessible to 0.0.0.0/0                                                                                                | https://docs.bridgecrew.io/docs/bc_aws_kubernetes_1                                                                                          |
+|  53 | CKV_AWS_37    | /aws/eks.tf                   | aws_eks_cluster.eks_cluster                             | Ensure Amazon EKS control plane logging enabled for all log types                                                                                            | https://docs.bridgecrew.io/docs/bc_aws_kubernetes_4                                                                                          |
+|  54 | CKV_AWS_58    | /aws/eks.tf                   | aws_eks_cluster.eks_cluster                             | Ensure EKS Cluster has Secrets Encryption Enabled                                                                                                            | https://docs.bridgecrew.io/docs/bc_aws_kubernetes_3                                                                                          |
+|  55 | CKV_AWS_127   | /aws/elb.tf                   | aws_elb.weblb                                           | Ensure that Elastic Load Balancer(s) uses SSL certificates provided by AWS Certificate Manager                                                               | https://docs.bridgecrew.io/docs/ensure-that-elastic-load-balancers-uses-ssl-certificates-provided-by-aws-certificate-manager                 |
+|  56 | CKV_AWS_92    | /aws/elb.tf                   | aws_elb.weblb                                           | Ensure the ELB has access logging enabled                                                                                                                    | https://docs.bridgecrew.io/docs/bc_aws_logging_23                                                                                            |
+|  57 | CKV_AWS_111   | /aws/es.tf                    | aws_iam_policy_document.policy                          | Ensure IAM policies does not allow write access without constraints                                                                                          | https://docs.bridgecrew.io/docs/ensure-iam-policies-do-not-allow-write-access-without-constraint                                             |
+|  58 | CKV_AWS_109   | /aws/es.tf                    | aws_iam_policy_document.policy                          | Ensure IAM policies does not allow permissions management / resource exposure without constraints                                                            | https://docs.bridgecrew.io/docs/ensure-iam-policies-do-not-allow-permissions-management-resource-exposure-without-constraint                 |
+|  59 | CKV_AWS_137   | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Ensure that Elasticsearch is configured inside a VPC                                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-elasticsearch-is-configured-inside-a-vpc                                                         |
+|  60 | CKV_AWS_247   | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Ensure all data stored in the Elasticsearch is encrypted with a CMK                                                                                          |                                                                                                                                              |
+|  61 | CKV_AWS_248   | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Ensure that Elasticsearch is not using the default Security Group                                                                                            |                                                                                                                                              |
+|  62 | CKV_AWS_228   | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Verify Elasticsearch domain is using an up to date TLS policy                                                                                                |                                                                                                                                              |
+|  63 | CKV_AWS_84    | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Ensure Elasticsearch Domain Logging is enabled                                                                                                               | https://docs.bridgecrew.io/docs/elasticsearch_7                                                                                              |
+|  64 | CKV_AWS_5     | /aws/es.tf                    | aws_elasticsearch_domain.monitoring-framework           | Ensure all data stored in the Elasticsearch is securely encrypted at rest                                                                                    | https://docs.bridgecrew.io/docs/elasticsearch_3-enable-encryptionatrest                                                                      |
+|  65 | CKV_AWS_7     | /aws/kms.tf                   | aws_kms_key.logs_key                                    | Ensure rotation for customer created CMKs is enabled                                                                                                         | https://docs.bridgecrew.io/docs/logging_8                                                                                                    |
+|  66 | CKV_AWS_115   | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | Ensure that AWS Lambda function is configured for function-level concurrent execution limit                                                                  | https://docs.bridgecrew.io/docs/ensure-that-aws-lambda-function-is-configured-for-function-level-concurrent-execution-limit                  |
+|  67 | CKV_AWS_45    | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | Ensure no hard-coded secrets exist in lambda environment                                                                                                     | https://docs.bridgecrew.io/docs/bc_aws_secrets_3                                                                                             |
+|  68 | CKV_AWS_50    | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | X-ray tracing is enabled for Lambda                                                                                                                          | https://docs.bridgecrew.io/docs/bc_aws_serverless_4                                                                                          |
+|  69 | CKV_AWS_117   | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | Ensure that AWS Lambda function is configured inside a VPC                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1                                                 |
+|  70 | CKV_AWS_173   | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | Check encryption settings for Lambda environmental variable                                                                                                  | https://docs.bridgecrew.io/docs/bc_aws_serverless_5                                                                                          |
+|  71 | CKV_AWS_116   | /aws/lambda.tf                | aws_lambda_function.analysis_lambda                     | Ensure that AWS Lambda function is configured for a Dead Letter Queue(DLQ)                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-aws-lambda-function-is-configured-for-a-dead-letter-queue-dlq                                    |
+|  72 | CKV_AWS_44    | /aws/neptune.tf               | aws_neptune_cluster.default                             | Ensure Neptune storage is securely encrypted                                                                                                                 | https://docs.bridgecrew.io/docs/general_18                                                                                                   |
+|  73 | CKV_AWS_101   | /aws/neptune.tf               | aws_neptune_cluster.default                             | Ensure Neptune logging is enabled                                                                                                                            | https://docs.bridgecrew.io/docs/bc_aws_logging_24                                                                                            |
+|  74 | CKV_AWS_41    | /aws/providers.tf             | aws.plain_text_access_keys_provider                     | Ensure no hard coded AWS access key and secret key exists in provider                                                                                        | https://docs.bridgecrew.io/docs/bc_aws_secrets_5                                                                                             |
+|  75 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  76 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  77 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  78 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+|  79 | CKV_AWS_133   | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure that RDS instances has backup policy                                                                                                                  | https://docs.bridgecrew.io/docs/ensure-that-rds-instances-have-backup-policy                                                                 |
+|  80 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app2-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  81 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app2-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  82 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app2-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  83 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app2-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+|  84 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app3-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  85 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app3-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  86 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app3-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  87 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app3-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+|  88 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app4-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  89 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app4-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  90 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app4-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  91 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app4-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+|  92 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app5-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  93 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app5-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  94 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app5-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  95 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app5-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+|  96 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app6-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+|  97 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app6-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+|  98 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app6-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+|  99 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app6-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+| 100 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app7-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+| 101 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app7-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+| 102 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app7-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+| 103 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app7-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+| 104 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app8-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+| 105 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app8-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+| 106 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app8-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+| 107 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app8-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+| 108 | CKV_AWS_128   | /aws/rds.tf                   | aws_rds_cluster.app9-rds-cluster                        | Ensure that an Amazon RDS Clusters have AWS Identity and Access Management (IAM) authentication enabled                                                      | https://docs.bridgecrew.io/docs/ensure-that-an-amazon-rds-clusters-have-iam-authentication-enabled                                           |
+| 109 | CKV_AWS_139   | /aws/rds.tf                   | aws_rds_cluster.app9-rds-cluster                        | Ensure that RDS clusters have deletion protection enabled                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled                                      |
+| 110 | CKV_AWS_96    | /aws/rds.tf                   | aws_rds_cluster.app9-rds-cluster                        | Ensure all data stored in Aurora is securely encrypted at rest                                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_38                                                                                            |
+| 111 | CKV_AWS_162   | /aws/rds.tf                   | aws_rds_cluster.app9-rds-cluster                        | Ensure RDS cluster has IAM authentication enabled                                                                                                            | https://docs.bridgecrew.io/docs/ensure-rds-cluster-has-iam-authentication-enabled                                                            |
+| 112 | CKV_AWS_186   | /aws/s3.tf                    | aws_s3_bucket_object.data_object                        | Ensure S3 bucket Object is encrypted by KMS using a customer managed Key (CMK)                                                                               | https://docs.bridgecrew.io/docs/bc_aws_general_106                                                                                           |
+| 113 | CKV_AZURE_116 | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure that AKS uses Azure Policies Add-on                                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-aks-uses-azure-policies-add-on                                                                   |
+| 114 | CKV_AZURE_8   | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure Kubernetes Dashboard is disabled                                                                                                                      | https://docs.bridgecrew.io/docs/bc_azr_kubernetes_5                                                                                          |
+| 115 | CKV_AZURE_4   | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure AKS logging to Azure Monitoring is Configured                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_kubernetes_1                                                                                          |
+| 116 | CKV_AZURE_117 | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure that AKS uses disk encryption set                                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-aks-uses-disk-encryption-set                                                                     |
+| 117 | CKV_AZURE_115 | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure that AKS enables private clusters                                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-aks-enables-private-clusters                                                                     |
+| 118 | CKV_AZURE_141 | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure AKS local admin account is disabled                                                                                                                   |                                                                                                                                              |
+| 119 | CKV_AZURE_7   | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure AKS cluster has Network Policy configured                                                                                                             | https://docs.bridgecrew.io/docs/bc_azr_kubernetes_4                                                                                          |
+| 120 | CKV_AZURE_6   | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure AKS has an API Server Authorized IP Ranges enabled                                                                                                    | https://docs.bridgecrew.io/docs/bc_azr_kubernetes_3                                                                                          |
+| 121 | CKV_AZURE_5   | /azure/aks.tf                 | azurerm_kubernetes_cluster.k8s_cluster                  | Ensure RBAC is enabled on AKS clusters                                                                                                                       | https://docs.bridgecrew.io/docs/bc_azr_kubernetes_2                                                                                          |
+| 122 | CKV_AZURE_15  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure web app is using the latest version of TLS encryption                                                                                                 | https://docs.bridgecrew.io/docs/bc_azr_networking_6                                                                                          |
+| 123 | CKV_AZURE_78  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure FTP deployments are disabled                                                                                                                          | https://docs.bridgecrew.io/docs/ensure-ftp-deployments-are-disabled                                                                          |
+| 124 | CKV_AZURE_18  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that 'HTTP Version' is the latest if used to run the web app                                                                                          | https://docs.bridgecrew.io/docs/bc_azr_networking_8                                                                                          |
+| 125 | CKV_AZURE_88  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that app services use Azure Files                                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-app-services-use-azure-files                                                                     |
+| 126 | CKV_AZURE_13  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure App Service Authentication is set on Azure App Service                                                                                                | https://docs.bridgecrew.io/docs/bc_azr_general_2                                                                                             |
+| 127 | CKV_AZURE_71  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that Managed identity provider is enabled for app services                                                                                            | https://docs.bridgecrew.io/docs/ensure-that-managed-identity-provider-is-enabled-for-app-services                                            |
+| 128 | CKV_AZURE_80  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that 'Net Framework' version is the latest, if used as a part of the web app                                                                          | https://docs.bridgecrew.io/docs/ensure-that-net-framework-version-is-the-latest-if-used-as-a-part-of-the-web-app                             |
+| 129 | CKV_AZURE_65  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that App service enables detailed error messages                                                                                                      | https://docs.bridgecrew.io/docs/tbdensure-that-app-service-enables-detailed-error-messages                                                   |
+| 130 | CKV_AZURE_63  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that App service enables HTTP logging                                                                                                                 | https://docs.bridgecrew.io/docs/ensure-that-app-service-enables-http-logging                                                                 |
+| 131 | CKV_AZURE_17  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure the web app has 'Client Certificates (Incoming client certificates)' set                                                                              | https://docs.bridgecrew.io/docs/bc_azr_networking_7                                                                                          |
+| 132 | CKV_AZURE_16  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that Register with Azure Active Directory is enabled on App Service                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_iam_1                                                                                                 |
+| 133 | CKV_AZURE_66  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure that App service enables failed request tracing                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-app-service-enables-failed-request-tracing                                                       |
+| 134 | CKV_AZURE_14  | /azure/app_service.tf         | azurerm_app_service.app-service1                        | Ensure web app redirects all HTTP traffic to HTTPS in Azure App Service                                                                                      | https://docs.bridgecrew.io/docs/bc_azr_networking_5                                                                                          |
+| 135 | CKV_AZURE_78  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure FTP deployments are disabled                                                                                                                          | https://docs.bridgecrew.io/docs/ensure-ftp-deployments-are-disabled                                                                          |
+| 136 | CKV_AZURE_18  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that 'HTTP Version' is the latest if used to run the web app                                                                                          | https://docs.bridgecrew.io/docs/bc_azr_networking_8                                                                                          |
+| 137 | CKV_AZURE_88  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that app services use Azure Files                                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-app-services-use-azure-files                                                                     |
+| 138 | CKV_AZURE_13  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure App Service Authentication is set on Azure App Service                                                                                                | https://docs.bridgecrew.io/docs/bc_azr_general_2                                                                                             |
+| 139 | CKV_AZURE_71  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that Managed identity provider is enabled for app services                                                                                            | https://docs.bridgecrew.io/docs/ensure-that-managed-identity-provider-is-enabled-for-app-services                                            |
+| 140 | CKV_AZURE_80  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that 'Net Framework' version is the latest, if used as a part of the web app                                                                          | https://docs.bridgecrew.io/docs/ensure-that-net-framework-version-is-the-latest-if-used-as-a-part-of-the-web-app                             |
+| 141 | CKV_AZURE_65  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that App service enables detailed error messages                                                                                                      | https://docs.bridgecrew.io/docs/tbdensure-that-app-service-enables-detailed-error-messages                                                   |
+| 142 | CKV_AZURE_63  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that App service enables HTTP logging                                                                                                                 | https://docs.bridgecrew.io/docs/ensure-that-app-service-enables-http-logging                                                                 |
+| 143 | CKV_AZURE_17  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure the web app has 'Client Certificates (Incoming client certificates)' set                                                                              | https://docs.bridgecrew.io/docs/bc_azr_networking_7                                                                                          |
+| 144 | CKV_AZURE_16  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that Register with Azure Active Directory is enabled on App Service                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_iam_1                                                                                                 |
+| 145 | CKV_AZURE_66  | /azure/app_service.tf         | azurerm_app_service.app-service2                        | Ensure that App service enables failed request tracing                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-app-service-enables-failed-request-tracing                                                       |
+| 146 | CKV_AZURE_1   | /azure/instance.tf            | azurerm_linux_virtual_machine.linux_machine             | Ensure Azure Instance does not use basic authentication(Use SSH Key Instead)                                                                                 | https://docs.bridgecrew.io/docs/bc_azr_networking_1                                                                                          |
+| 147 | CKV_AZURE_50  | /azure/instance.tf            | azurerm_linux_virtual_machine.linux_machine             | Ensure Virtual Machine Extensions are not Installed                                                                                                          | https://docs.bridgecrew.io/docs/bc_azr_general_14                                                                                            |
+| 148 | CKV_AZURE_149 | /azure/instance.tf            | azurerm_linux_virtual_machine.linux_machine             | Ensure that Virtual machine does not enable password authentication                                                                                          |                                                                                                                                              |
+| 149 | CKV_AZURE_151 | /azure/instance.tf            | azurerm_windows_virtual_machine.windows_machine         | Ensure Windows VM enables encryption                                                                                                                         |                                                                                                                                              |
+| 150 | CKV_AZURE_50  | /azure/instance.tf            | azurerm_windows_virtual_machine.windows_machine         | Ensure Virtual Machine Extensions are not Installed                                                                                                          | https://docs.bridgecrew.io/docs/bc_azr_general_14                                                                                            |
+| 151 | CKV_AZURE_109 | /azure/key_vault.tf           | azurerm_key_vault.example                               | Ensure that key vault allows firewall rules settings                                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-key-vault-allows-firewall-rules-settings                                                         |
+| 152 | CKV_AZURE_42  | /azure/key_vault.tf           | azurerm_key_vault.example                               | Ensure the key vault is recoverable                                                                                                                          | https://docs.bridgecrew.io/docs/ensure-the-key-vault-is-recoverable                                                                          |
+| 153 | CKV_AZURE_110 | /azure/key_vault.tf           | azurerm_key_vault.example                               | Ensure that key vault enables purge protection                                                                                                               | https://docs.bridgecrew.io/docs/ensure-that-key-vault-enables-purge-protection                                                               |
+| 154 | CKV_AZURE_112 | /azure/key_vault.tf           | azurerm_key_vault_key.generated                         | Ensure that key vault key is backed by HSM                                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-key-vault-key-is-backed-by-hsm                                                                   |
+| 155 | CKV_AZURE_40  | /azure/key_vault.tf           | azurerm_key_vault_key.generated                         | Ensure that the expiration date is set on all keys                                                                                                           | https://docs.bridgecrew.io/docs/set-an-expiration-date-on-all-keys                                                                           |
+| 156 | CKV_AZURE_114 | /azure/key_vault.tf           | azurerm_key_vault_secret.secret                         | Ensure that key vault secrets have "content_type" set                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-key-vault-secrets-have-content_type-set                                                          |
+| 157 | CKV_AZURE_41  | /azure/key_vault.tf           | azurerm_key_vault_secret.secret                         | Ensure that the expiration date is set on all secrets                                                                                                        | https://docs.bridgecrew.io/docs/set-an-expiration-date-on-all-secrets                                                                        |
+| 158 | CKV_AZURE_38  | /azure/logging.tf             | azurerm_monitor_log_profile.logging_profile             | Ensure audit profile captures all the activities                                                                                                             | https://docs.bridgecrew.io/docs/ensure-audit-profile-captures-all-activities                                                                 |
+| 159 | CKV_AZURE_37  | /azure/logging.tf             | azurerm_monitor_log_profile.logging_profile             | Ensure that Activity Log Retention is set 365 days or greater                                                                                                | https://docs.bridgecrew.io/docs/set-activity-log-retention-to-365-days-or-greater                                                            |
+| 160 | CKV_AZURE_35  | /azure/mssql.tf               | azurerm_storage_account.security_storage_account        | Ensure default network access rule for Storage Accounts is set to deny                                                                                       | https://docs.bridgecrew.io/docs/set-default-network-access-rule-for-storage-accounts-to-deny                                                 |
+| 161 | CKV_AZURE_33  | /azure/mssql.tf               | azurerm_storage_account.security_storage_account        | Ensure Storage logging is enabled for Queue service for read, write and delete requests                                                                      | https://docs.bridgecrew.io/docs/enable-requests-on-storage-logging-for-queue-service                                                         |
+| 162 | CKV_AZURE_44  | /azure/mssql.tf               | azurerm_storage_account.security_storage_account        | Ensure Storage Account is using the latest version of TLS encryption                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_storage_2                                                                                             |
+| 163 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql1                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 164 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql1                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 165 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql2                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 166 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql2                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 167 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql3                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 168 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql3                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 169 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql4                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 170 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql4                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 171 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql5                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 172 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql5                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 173 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql6                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 174 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql6                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 175 | CKV_AZURE_52  | /azure/mssql.tf               | azurerm_mssql_server.mssql7                             | Ensure MSSQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mssql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 176 | CKV_AZURE_113 | /azure/mssql.tf               | azurerm_mssql_server.mssql7                             | Ensure that SQL server disables public network access                                                                                                        | https://docs.bridgecrew.io/docs/ensure-that-sql-server-disables-public-network-access                                                        |
+| 177 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy1 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 178 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy1 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 179 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy2 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 180 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy2 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 181 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy3 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 182 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy3 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 183 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy4 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 184 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy4 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 185 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy5 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 186 | CKV_AZURE_26  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy5 | Ensure that 'Send Alerts To' is enabled for MSSQL servers                                                                                                    | https://docs.bridgecrew.io/docs/bc_azr_general_7                                                                                             |
+| 187 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy5 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 188 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy6 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 189 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy6 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 190 | CKV_AZURE_25  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy7 | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 191 | CKV_AZURE_27  | /azure/mssql.tf               | azurerm_mssql_server_security_alert_policy.alertpolicy7 | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 192 | CKV_AZURE_10  | /azure/networking.tf          | azurerm_network_security_group.bad_sg                   | Ensure that SSH access is restricted from the internet                                                                                                       | https://docs.bridgecrew.io/docs/bc_azr_networking_3                                                                                          |
+| 193 | CKV_AZURE_9   | /azure/networking.tf          | azurerm_network_security_group.bad_sg                   | Ensure that RDP access is restricted from the internet                                                                                                       | https://docs.bridgecrew.io/docs/bc_azr_networking_2                                                                                          |
+| 194 | CKV_AZURE_12  | /azure/networking.tf          | azurerm_network_watcher_flow_log.flow_log               | Ensure that Network Security Group Flow Log retention period is 'greater than 90 days'                                                                       | https://docs.bridgecrew.io/docs/bc_azr_logging_1                                                                                             |
+| 195 | CKV_AZURE_39  | /azure/roles.tf               | azurerm_role_definition.example                         | Ensure that no custom subscription owner roles are created                                                                                                   | https://docs.bridgecrew.io/docs/do-not-create-custom-subscription-owner-roles                                                                |
+| 196 | CKV_AZURE_19  | /azure/security_center.tf     | azurerm_security_center_subscription_pricing.pricing    | Ensure that standard pricing tier is selected                                                                                                                | https://docs.bridgecrew.io/docs/ensure-standard-pricing-tier-is-selected                                                                     |
+| 197 | CKV_AZURE_20  | /azure/security_center.tf     | azurerm_security_center_contact.contact                 | Ensure that security contact 'Phone number' is set                                                                                                           | https://docs.bridgecrew.io/docs/bc_azr_general_3                                                                                             |
+| 198 | CKV_AZURE_22  | /azure/security_center.tf     | azurerm_security_center_contact.contact                 | Ensure that 'Send email notification for high severity alerts' is set to 'On'                                                                                | https://docs.bridgecrew.io/docs/bc_azr_general_5                                                                                             |
+| 199 | CKV_AZURE_21  | /azure/security_center.tf     | azurerm_security_center_contact.contact                 | Ensure that 'Send email notification for high severity alerts' is set to 'On'                                                                                | https://docs.bridgecrew.io/docs/bc_azr_general_4                                                                                             |
+| 200 | CKV_AZURE_25  | /azure/sql.tf                 | azurerm_mssql_server_security_alert_policy.example      | Ensure that 'Threat Detection types' is set to 'All'                                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_general_6                                                                                             |
+| 201 | CKV_AZURE_26  | /azure/sql.tf                 | azurerm_mssql_server_security_alert_policy.example      | Ensure that 'Send Alerts To' is enabled for MSSQL servers                                                                                                    | https://docs.bridgecrew.io/docs/bc_azr_general_7                                                                                             |
+| 202 | CKV_AZURE_27  | /azure/sql.tf                 | azurerm_mssql_server_security_alert_policy.example      | Ensure that 'Email service and co-administrators' is 'Enabled' for MSSQL servers                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_8                                                                                             |
+| 203 | CKV_AZURE_127 | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure that My SQL server enables Threat detection policy                                                                                                    | https://docs.bridgecrew.io/docs/ensure-that-my-sql-server-enables-threat-detection-policy                                                    |
+| 204 | CKV_AZURE_94  | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure that My SQL server enables geo-redundant backups                                                                                                      | https://docs.bridgecrew.io/docs/ensure-that-my-sql-server-enables-geo-redundant-backups                                                      |
+| 205 | CKV_AZURE_53  | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure 'public network access enabled' is set to 'False' for mySQL servers                                                                                   | https://docs.bridgecrew.io/docs/ensure-public-network-access-enabled-is-set-to-false-for-mysql-servers                                       |
+| 206 | CKV_AZURE_54  | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure MySQL is using the latest version of TLS encryption                                                                                                   | https://docs.bridgecrew.io/docs/ensure-mysql-is-using-the-latest-version-of-tls-encryption                                                   |
+| 207 | CKV_AZURE_28  | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure 'Enforce SSL connection' is set to 'ENABLED' for MySQL Database Server                                                                                | https://docs.bridgecrew.io/docs/bc_azr_networking_9                                                                                          |
+| 208 | CKV_AZURE_147 | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure PostgreSQL is using the latest version of TLS encryption                                                                                              |                                                                                                                                              |
+| 209 | CKV_AZURE_130 | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure that PostgreSQL server enables infrastructure encryption                                                                                              | https://docs.bridgecrew.io/docs/ensure-that-postgresql-server-enables-infrastructure-encryption                                              |
+| 210 | CKV_AZURE_29  | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure 'Enforce SSL connection' is set to 'ENABLED' for PostgreSQL Database Server                                                                           | https://docs.bridgecrew.io/docs/bc_azr_networking_10                                                                                         |
+| 211 | CKV_AZURE_128 | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure that PostgreSQL server enables Threat detection policy                                                                                                | https://docs.bridgecrew.io/docs/ensure-that-postgresql-server-enables-threat-detection-policy                                                |
+| 212 | CKV_AZURE_102 | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure that PostgreSQL server enables geo-redundant backups                                                                                                  | https://docs.bridgecrew.io/docs/ensure-that-postgresql-server-enables-geo-redundant-backups                                                  |
+| 213 | CKV_AZURE_68  | /azure/sql.tf                 | azurerm_postgresql_server.example                       | Ensure that PostgreSQL server disables public network access                                                                                                 | https://docs.bridgecrew.io/docs/ensure-that-postgresql-server-disables-public-network-access                                                 |
+| 214 | CKV_AZURE_32  | /azure/sql.tf                 | azurerm_postgresql_configuration.thrtottling_config     | Ensure server parameter 'connection_throttling' is set to 'ON' for PostgreSQL Database Server                                                                | https://docs.bridgecrew.io/docs/bc_azr_networking_13                                                                                         |
+| 215 | CKV_AZURE_30  | /azure/sql.tf                 | azurerm_postgresql_configuration.example                | Ensure server parameter 'log_checkpoints' is set to 'ON' for PostgreSQL Database Server                                                                      | https://docs.bridgecrew.io/docs/bc_azr_networking_11                                                                                         |
+| 216 | CKV_AZURE_2   | /azure/storage.tf             | azurerm_managed_disk.example                            | Ensure Azure managed disk has encryption enabled                                                                                                             | https://docs.bridgecrew.io/docs/bc_azr_general_1                                                                                             |
+| 217 | CKV_AZURE_93  | /azure/storage.tf             | azurerm_managed_disk.example                            | Ensure that managed disks use a specific set of disk encryption sets for the customer-managed key encryption                                                 | https://docs.bridgecrew.io/docs/ensure-that-managed-disks-use-a-specific-set-of-disk-encryption-sets-for-the-customer-managed-key-encryption |
+| 218 | CKV_AZURE_35  | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure default network access rule for Storage Accounts is set to deny                                                                                       | https://docs.bridgecrew.io/docs/set-default-network-access-rule-for-storage-accounts-to-deny                                                 |
+| 219 | CKV_AZURE_3   | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure that 'Secure transfer required' is set to 'Enabled'                                                                                                   |                                                                                                                                              |
+| 220 | CKV_AZURE_33  | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure Storage logging is enabled for Queue service for read, write and delete requests                                                                      | https://docs.bridgecrew.io/docs/enable-requests-on-storage-logging-for-queue-service                                                         |
+| 221 | CKV_AZURE_44  | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure Storage Account is using the latest version of TLS encryption                                                                                         | https://docs.bridgecrew.io/docs/bc_azr_storage_2                                                                                             |
+| 222 | CKV_AZURE_36  | /azure/storage.tf             | azurerm_storage_account_network_rules.test              | Ensure 'Trusted Microsoft Services' is enabled for Storage Account access                                                                                    | https://docs.bridgecrew.io/docs/enable-trusted-microsoft-services-for-storage-account-access                                                 |
+| 223 | CKV_GCP_6     | /gcp/big_data.tf              | google_sql_database_instance.master_instance            | Ensure all Cloud SQL database instance requires all incoming connections to use SSL                                                                          | https://docs.bridgecrew.io/docs/bc_gcp_general_1                                                                                             |
+| 224 | CKV_GCP_11    | /gcp/big_data.tf              | google_sql_database_instance.master_instance            | Ensure that Cloud SQL database Instances are not open to the world                                                                                           | https://docs.bridgecrew.io/docs/bc_gcp_networking_4                                                                                          |
+| 225 | CKV_GCP_79    | /gcp/big_data.tf              | google_sql_database_instance.master_instance            | Ensure SQL database is using latest Major version                                                                                                            |                                                                                                                                              |
+| 226 | CKV_GCP_60    | /gcp/big_data.tf              | google_sql_database_instance.master_instance            | Ensure Cloud SQL database does not have public IP                                                                                                            | https://docs.bridgecrew.io/docs/bc_gcp_sql_11                                                                                                |
+| 227 | CKV_GCP_14    | /gcp/big_data.tf              | google_sql_database_instance.master_instance            | Ensure all Cloud SQL database instance have backup configuration enabled                                                                                     | https://docs.bridgecrew.io/docs/bc_gcp_general_2                                                                                             |
+| 228 | CKV_GCP_15    | /gcp/big_data.tf              | google_bigquery_dataset.dataset                         | Ensure that BigQuery datasets are not anonymously or publicly accessible                                                                                     | https://docs.bridgecrew.io/docs/bc_gcp_general_3                                                                                             |
+| 229 | CKV_GCP_81    | /gcp/big_data.tf              | google_bigquery_dataset.dataset                         | Ensure Big Query Tables are encrypted with Customer Supplied Encryption Keys (CSEK)                                                                          |                                                                                                                                              |
+| 230 | CKV_GCP_62    | /gcp/gcs.tf                   | google_storage_bucket.terragoat_website                 | Bucket should log access                                                                                                                                     | https://docs.bridgecrew.io/docs/bc_gcp_logging_2                                                                                             |
+| 231 | CKV_GCP_78    | /gcp/gcs.tf                   | google_storage_bucket.terragoat_website                 | Ensure Cloud storage has versioning enabled                                                                                                                  |                                                                                                                                              |
+| 232 | CKV_GCP_29    | /gcp/gcs.tf                   | google_storage_bucket.terragoat_website                 | Ensure that Cloud Storage buckets have uniform bucket-level access enabled                                                                                   | https://docs.bridgecrew.io/docs/bc_gcp_gcs_2                                                                                                 |
+| 233 | CKV_GCP_28    | /gcp/gcs.tf                   | google_storage_bucket_iam_binding.allow_public_read     | Ensure that Cloud Storage bucket is not anonymously or publicly accessible                                                                                   | https://docs.bridgecrew.io/docs/bc_gcp_public_1                                                                                              |
+| 234 | CKV_GCP_70    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure the GKE Release Channel is set                                                                                                                        | https://docs.bridgecrew.io/docs/ensure-the-gke-release-channel-is-set                                                                        |
+| 235 | CKV_GCP_69    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure the GKE Metadata Server is Enabled                                                                                                                    | https://docs.bridgecrew.io/docs/ensure-the-gke-metadata-server-is-enabled                                                                    |
+| 236 | CKV_GCP_67    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure legacy Compute Engine instance metadata APIs are Disabled                                                                                             | https://docs.bridgecrew.io/docs/ensure-legacy-compute-engine-instance-metadata-apis-are-disabled                                             |
+| 237 | CKV_GCP_19    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure GKE basic auth is disabled                                                                                                                            | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_11                                                                                         |
+| 238 | CKV_GCP_21    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Kubernetes Clusters are configured with Labels                                                                                                        | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_13                                                                                         |
+| 239 | CKV_GCP_66    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure use of Binary Authorization                                                                                                                           | https://docs.bridgecrew.io/docs/ensure-use-of-binary-authorization                                                                           |
+| 240 | CKV_GCP_61    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Enable VPC Flow Logs and Intranode Visibility                                                                                                                | https://docs.bridgecrew.io/docs/enable-vpc-flow-logs-and-intranode-visibility                                                                |
+| 241 | CKV_GCP_25    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Kubernetes Cluster is created with Private cluster enabled                                                                                            | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_6                                                                                          |
+| 242 | CKV_GCP_1     | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Stackdriver Logging is set to Enabled on Kubernetes Engine Clusters                                                                                   | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_1                                                                                          |
+| 243 | CKV_GCP_18    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure GKE Control Plane is not public                                                                                                                       | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_10                                                                                         |
+| 244 | CKV_GCP_64    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure clusters are created with Private Nodes                                                                                                               | https://docs.bridgecrew.io/docs/ensure-clusters-are-created-with-private-nodes                                                               |
+| 245 | CKV_GCP_13    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure client certificate authentication to Kubernetes Engine Clusters is disabled                                                                           | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_8                                                                                          |
+| 246 | CKV_GCP_12    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Network Policy is enabled on Kubernetes Engine Clusters                                                                                               | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_7                                                                                          |
+| 247 | CKV_GCP_65    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Manage Kubernetes RBAC users with Google Groups for GKE                                                                                                      | https://docs.bridgecrew.io/docs/manage-kubernetes-rbac-users-with-google-groups-for-gke                                                      |
+| 248 | CKV_GCP_24    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure PodSecurityPolicy controller is enabled on the Kubernetes Engine Clusters                                                                             | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_9                                                                                          |
+| 249 | CKV_GCP_7     | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Legacy Authorization is set to Disabled on Kubernetes Engine Clusters                                                                                 | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_2                                                                                          |
+| 250 | CKV_GCP_23    | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Kubernetes Cluster is created with Alias IP ranges enabled                                                                                            | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_15                                                                                         |
+| 251 | CKV_GCP_8     | /gcp/gke.tf                   | google_container_cluster.workload_cluster               | Ensure Stackdriver Monitoring is set to Enabled on Kubernetes Engine Clusters                                                                                | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_3                                                                                          |
+| 252 | CKV_GCP_68    | /gcp/gke.tf                   | google_container_node_pool.custom_node_pool             | Ensure Secure Boot for Shielded GKE Nodes is Enabled                                                                                                         | https://docs.bridgecrew.io/docs/ensure-secure-boot-for-shielded-gke-nodes-is-enabled                                                         |
+| 253 | CKV_GCP_22    | /gcp/gke.tf                   | google_container_node_pool.custom_node_pool             | Ensure Container-Optimized OS (cos) is used for Kubernetes Engine Clusters Node image                                                                        | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_14                                                                                         |
+| 254 | CKV_GCP_69    | /gcp/gke.tf                   | google_container_node_pool.custom_node_pool             | Ensure the GKE Metadata Server is Enabled                                                                                                                    | https://docs.bridgecrew.io/docs/ensure-the-gke-metadata-server-is-enabled                                                                    |
+| 255 | CKV_GCP_9     | /gcp/gke.tf                   | google_container_node_pool.custom_node_pool             | Ensure 'Automatic node repair' is enabled for Kubernetes Clusters                                                                                            | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_4                                                                                          |
+| 256 | CKV_GCP_10    | /gcp/gke.tf                   | google_container_node_pool.custom_node_pool             | Ensure 'Automatic node upgrade' is enabled for Kubernetes Clusters                                                                                           | https://docs.bridgecrew.io/docs/bc_gcp_kubernetes_5                                                                                          |
+| 257 | CKV_GCP_38    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure VM disks for critical VMs are encrypted with Customer Supplied Encryption Keys (CSEK)                                                                 | https://docs.bridgecrew.io/docs/encrypt-boot-disks-for-instances-with-cseks                                                                  |
+| 258 | CKV_GCP_35    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure 'Enable connecting to serial ports' is not enabled for VM Instance                                                                                    | https://docs.bridgecrew.io/docs/bc_gcp_networking_11                                                                                         |
+| 259 | CKV_GCP_40    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure that Compute instances do not have public IP addresses                                                                                                | https://docs.bridgecrew.io/docs/bc_gcp_public_2                                                                                              |
+| 260 | CKV_GCP_34    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure that no instance in the project overrides the project setting for enabling OSLogin(OSLogin needs to be enabled in project metadata for all instances) | https://docs.bridgecrew.io/docs/bc_gcp_networking_10                                                                                         |
+| 261 | CKV_GCP_30    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure that instances are not configured to use the default service account                                                                                  | https://docs.bridgecrew.io/docs/bc_gcp_iam_1                                                                                                 |
+| 262 | CKV_GCP_36    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure that IP forwarding is not enabled on Instances                                                                                                        | https://docs.bridgecrew.io/docs/bc_gcp_networking_12                                                                                         |
+| 263 | CKV_GCP_32    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure 'Block Project-wide SSH keys' is enabled for VM instances                                                                                             | https://docs.bridgecrew.io/docs/bc_gcp_networking_8                                                                                          |
+| 264 | CKV_GCP_39    | /gcp/instances.tf             | google_compute_instance.server                          | Ensure Compute instances are launched with Shielded VM enabled                                                                                               | https://docs.bridgecrew.io/docs/bc_gcp_general_y                                                                                             |
+| 265 | CKV_GCP_37    | /gcp/instances.tf             | google_compute_disk.unencrypted_disk                    | Ensure VM disks for critical VMs are encrypted with Customer Supplied Encryption Keys (CSEK)                                                                 | https://docs.bridgecrew.io/docs/bc_gcp_general_x                                                                                             |
+| 266 | CKV_GCP_74    | /gcp/networks.tf              | google_compute_subnetwork.public-subnetwork             | Ensure that private_ip_google_access is enabled for Subnet                                                                                                   |                                                                                                                                              |
+| 267 | CKV_GCP_26    | /gcp/networks.tf              | google_compute_subnetwork.public-subnetwork             | Ensure that VPC Flow Logs is enabled for every subnet in a VPC Network                                                                                       | https://docs.bridgecrew.io/docs/bc_gcp_logging_1                                                                                             |
+| 268 | CKV_GCP_76    | /gcp/networks.tf              | google_compute_subnetwork.public-subnetwork             | Ensure that Private google access is enabled for IPV6                                                                                                        |                                                                                                                                              |
+| 269 | CKV_GCP_88    | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow unrestricted mysql access                                                                              |                                                                                                                                              |
+| 270 | CKV_GCP_106   | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow unrestricted http port 80 access                                                                       |                                                                                                                                              |
+| 271 | CKV_GCP_77    | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow on ftp port                                                                                            |                                                                                                                                              |
+| 272 | CKV_GCP_3     | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow unrestricted rdp access                                                                                | https://docs.bridgecrew.io/docs/bc_gcp_networking_2                                                                                          |
+| 273 | CKV_GCP_75    | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow unrestricted FTP access                                                                                |                                                                                                                                              |
+| 274 | CKV_GCP_2     | /gcp/networks.tf              | google_compute_firewall.allow_all                       | Ensure Google compute firewall ingress does not allow unrestricted ssh access                                                                                | https://docs.bridgecrew.io/docs/bc_gcp_networking_1                                                                                          |
+| 275 | CKV_OCI_9     | /oracle/bucket.tf             | oci_objectstorage_bucket.secretsquirrel                 | Ensure OCI Object Storage is encrypted with Customer Managed Key                                                                                             | https://docs.bridgecrew.io/docs/ensure-oci-object-storage-is-encrypted-with-customer-managed-key                                             |
+| 276 | CKV_OCI_8     | /oracle/bucket.tf             | oci_objectstorage_bucket.secretsquirrel                 | Ensure OCI Object Storage has versioning enabled                                                                                                             | https://docs.bridgecrew.io/docs/ensure-oci-object-storage-has-versioning-enabled                                                             |
+| 277 | CKV_OCI_7     | /oracle/bucket.tf             | oci_objectstorage_bucket.secretsquirrel                 | Ensure OCI Object Storage bucket can emit object events                                                                                                      | https://docs.bridgecrew.io/docs/ensure-oci-object-storage-bucket-can-emit-object-events                                                      |
+| 278 | CKV_OCI_10    | /oracle/bucket.tf             | oci_objectstorage_bucket.secretsquirrel                 | Ensure OCI Object Storage is not Public                                                                                                                      | https://docs.bridgecrew.io/docs/ensure-oci-object-storage-is-not-public                                                                      |
+| 279 | CKV2_AWS_12   | /aws/eks.tf                   | aws_vpc.eks_vpc                                         | Ensure the default security group of every VPC restricts all traffic                                                                                         | https://docs.bridgecrew.io/docs/networking_4                                                                                                 |
+| 280 | CKV2_AWS_12   | /aws/ec2.tf                   | aws_vpc.web_vpc                                         | Ensure the default security group of every VPC restricts all traffic                                                                                         | https://docs.bridgecrew.io/docs/networking_4                                                                                                 |
+| 281 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app8-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 282 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app4-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 283 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app7-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 284 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app1-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 285 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app3-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 286 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app9-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 287 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app5-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 288 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app6-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 289 | CKV2_AWS_8    | /aws/rds.tf                   | aws_rds_cluster.app2-rds-cluster                        | Ensure that RDS clusters has backup plan of AWS Backup                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-has-backup-plan-of-aws-backup                                                       |
+| 290 | CKV_AWS_145   | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure that S3 buckets are encrypted with KMS by default                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default                                                     |
+| 291 | CKV_AWS_145   | /aws/s3.tf                    | aws_s3_bucket.data_science                              | Ensure that S3 buckets are encrypted with KMS by default                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default                                                     |
+| 292 | CKV_AWS_145   | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure that S3 buckets are encrypted with KMS by default                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default                                                     |
+| 293 | CKV_AWS_145   | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure that S3 buckets are encrypted with KMS by default                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default                                                     |
+| 294 | CKV_AWS_145   | /aws/s3.tf                    | aws_s3_bucket.operations                                | Ensure that S3 buckets are encrypted with KMS by default                                                                                                     | https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default                                                     |
+| 295 | CKV_AWS_18    | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure the S3 bucket has access logging enabled                                                                                                              | https://docs.bridgecrew.io/docs/s3_13-enable-logging                                                                                         |
+| 296 | CKV_AWS_18    | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure the S3 bucket has access logging enabled                                                                                                              | https://docs.bridgecrew.io/docs/s3_13-enable-logging                                                                                         |
+| 297 | CKV_AWS_18    | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure the S3 bucket has access logging enabled                                                                                                              | https://docs.bridgecrew.io/docs/s3_13-enable-logging                                                                                         |
+| 298 | CKV_AWS_18    | /aws/s3.tf                    | aws_s3_bucket.operations                                | Ensure the S3 bucket has access logging enabled                                                                                                              | https://docs.bridgecrew.io/docs/s3_13-enable-logging                                                                                         |
+| 299 | CKV_AWS_18    | /aws/s3.tf                    | aws_s3_bucket.logs                                      | Ensure the S3 bucket has access logging enabled                                                                                                              | https://docs.bridgecrew.io/docs/s3_13-enable-logging                                                                                         |
+| 300 | CKV2_AWS_11   | /aws/eks.tf                   | aws_vpc.eks_vpc                                         | Ensure VPC flow logging is enabled in all VPCs                                                                                                               | https://docs.bridgecrew.io/docs/logging_9-enable-vpc-flow-logging                                                                            |
+| 301 | CKV2_AWS_2    | /aws/ec2.tf                   | aws_ebs_volume.web_host_storage                         | Ensure that only encrypted EBS volumes are attached to EC2 instances                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-only-encrypted-ebs-volumes-are-attached-to-ec2-instances                                         |
+| 302 | CKV2_AWS_6    | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 303 | CKV2_AWS_6    | /aws/s3.tf                    | aws_s3_bucket.data_science                              | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 304 | CKV2_AWS_6    | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 305 | CKV2_AWS_6    | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 306 | CKV2_AWS_6    | /aws/s3.tf                    | aws_s3_bucket.operations                                | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 307 | CKV2_AWS_6    | /aws/s3.tf                    | aws_s3_bucket.logs                                      | Ensure that S3 bucket has a Public Access block                                                                                                              | https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached      |
+| 308 | CKV_AWS_21    | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure all data stored in the S3 bucket have versioning enabled                                                                                              | https://docs.bridgecrew.io/docs/s3_16-enable-versioning                                                                                      |
+| 309 | CKV_AWS_21    | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure all data stored in the S3 bucket have versioning enabled                                                                                              | https://docs.bridgecrew.io/docs/s3_16-enable-versioning                                                                                      |
+| 310 | CKV_AWS_21    | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure all data stored in the S3 bucket have versioning enabled                                                                                              | https://docs.bridgecrew.io/docs/s3_16-enable-versioning                                                                                      |
+| 311 | CKV2_AZURE_7  | /azure/sql.tf                 | azurerm_sql_server.example                              | Ensure that Azure Active Directory Admin is configured                                                                                                       | https://docs.bridgecrew.io/docs/ensure-that-azure-active-directory-admin-is-configured                                                       |
+| 312 | CKV2_AZURE_1  | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure storage for critical data are encrypted with Customer Managed Key                                                                                     | https://docs.bridgecrew.io/docs/ensure-storage-for-critical-data-are-encrypted-with-customer-managed-key                                     |
+| 313 | CKV2_AZURE_1  | /azure/mssql.tf               | azurerm_storage_account.security_storage_account        | Ensure storage for critical data are encrypted with Customer Managed Key                                                                                     | https://docs.bridgecrew.io/docs/ensure-storage-for-critical-data-are-encrypted-with-customer-managed-key                                     |
+| 314 | CKV2_AZURE_16 | /azure/sql.tf                 | azurerm_mysql_server.example                            | Ensure that MySQL server enables customer-managed key for encryption                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-mysql-server-enables-customer-managed-key-for-encryption                                         |
+| 315 | CKV_AZURE_120 | /azure/application_gateway.tf | azurerm_application_gateway.network                     | Ensure that Application Gateway enables WAF                                                                                                                  | https://docs.bridgecrew.io/docs/ensure-that-application-gateway-enables-waf                                                                  |
+| 316 | CKV_AWS_144   | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 317 | CKV_AWS_144   | /aws/s3.tf                    | aws_s3_bucket.data_science                              | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 318 | CKV_AWS_144   | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 319 | CKV_AWS_144   | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 320 | CKV_AWS_144   | /aws/s3.tf                    | aws_s3_bucket.operations                                | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 321 | CKV_AWS_144   | /aws/s3.tf                    | aws_s3_bucket.logs                                      | Ensure that S3 bucket has cross-region replication enabled                                                                                                   | https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-cross-region-replication-enabled                                                   |
+| 322 | CKV2_AZURE_18 | /azure/storage.tf             | azurerm_storage_account.example                         | Ensure that Storage Accounts use customer-managed key for encryption                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-storage-accounts-use-customer-managed-key-for-encryption                                         |
+| 323 | CKV2_AZURE_18 | /azure/mssql.tf               | azurerm_storage_account.security_storage_account        | Ensure that Storage Accounts use customer-managed key for encryption                                                                                         | https://docs.bridgecrew.io/docs/ensure-that-storage-accounts-use-customer-managed-key-for-encryption                                         |
+| 324 | CKV_AWS_19    | /aws/s3.tf                    | aws_s3_bucket.financials                                | Ensure all data stored in the S3 bucket is securely encrypted at rest                                                                                        | https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest                                                                                 |
+| 325 | CKV_AWS_19    | /aws/s3.tf                    | aws_s3_bucket.data_science                              | Ensure all data stored in the S3 bucket is securely encrypted at rest                                                                                        | https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest                                                                                 |
+| 326 | CKV_AWS_19    | /aws/s3.tf                    | aws_s3_bucket.data                                      | Ensure all data stored in the S3 bucket is securely encrypted at rest                                                                                        | https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest                                                                                 |
+| 327 | CKV_AWS_19    | /aws/ec2.tf                   | aws_s3_bucket.flowbucket                                | Ensure all data stored in the S3 bucket is securely encrypted at rest                                                                                        | https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest                                                                                 |
+| 328 | CKV_AWS_19    | /aws/s3.tf                    | aws_s3_bucket.operations                                | Ensure all data stored in the S3 bucket is securely encrypted at rest                                                                                        | https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest                                                                                 |
+| 329 | CKV_AZURE_24  | /azure/sql.tf                 | azurerm_sql_server.example                              | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 330 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql5                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 331 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql1                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 332 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql6                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 333 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql2                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 334 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql4                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 335 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql7                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 336 | CKV_AZURE_24  | /azure/mssql.tf               | azurerm_mssql_server.mssql3                             | Ensure that 'Auditing' Retention is 'greater than 90 days' for SQL servers                                                                                   | https://docs.bridgecrew.io/docs/bc_azr_logging_3                                                                                             |
+| 337 | CKV_AZURE_23  | /azure/sql.tf                 | azurerm_sql_server.example                              | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 338 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql5                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 339 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql1                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 340 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql6                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 341 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql2                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 342 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql4                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 343 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql7                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+| 344 | CKV_AZURE_23  | /azure/mssql.tf               | azurerm_mssql_server.mssql3                             | Ensure that 'Auditing' is set to 'On' for SQL servers                                                                                                        | https://docs.bridgecrew.io/docs/bc_azr_logging_2                                                                                             |
+
+---
+
+### dockerfile scan results:
+
+|    | check_id     | file                      | resource                   | check_name                                                               | guideline                                                                                                |
+|----|--------------|---------------------------|----------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+|  0 | CKV_DOCKER_3 | /aws/resources/Dockerfile | /aws/resources/Dockerfile. | Ensure that a user for the container has been created                    | https://docs.bridgecrew.io/docs/ensure-that-a-user-for-the-container-has-been-created                    |
+|  1 | CKV_DOCKER_2 | /aws/resources/Dockerfile | /aws/resources/Dockerfile. | Ensure that HEALTHCHECK instructions have been added to container images | https://docs.bridgecrew.io/docs/ensure-that-healthcheck-instructions-have-been-added-to-container-images |
+
+---
+
+### secrets scan results:
+
+|    | check_id     | file              | resource                                 | check_name                 | guideline                                     |
+|----|--------------|-------------------|------------------------------------------|----------------------------|-----------------------------------------------|
+|  0 | CKV_SECRET_2 | /aws/lambda.tf    | 25910f981e85ca04baf359199dd0bd4a3ae738b6 | AWS Access Key             | https://docs.bridgecrew.io/docs/git_secrets_2 |
+|  1 | CKV_SECRET_6 | /aws/lambda.tf    | d70eab08607a4d05faa2d0d6647206599e9abc65 | Base64 High Entropy String | https://docs.bridgecrew.io/docs/git_secrets_6 |
+|  2 | CKV_SECRET_2 | /aws/providers.tf | 25910f981e85ca04baf359199dd0bd4a3ae738b6 | AWS Access Key             | https://docs.bridgecrew.io/docs/git_secrets_2 |
+|  3 | CKV_SECRET_6 | /aws/providers.tf | d70eab08607a4d05faa2d0d6647206599e9abc65 | Base64 High Entropy String | https://docs.bridgecrew.io/docs/git_secrets_6 |
+|  4 | CKV_SECRET_6 | /azure/sql.tf     | a57ae0fe47084bc8a05f69f3f8083896f8b437b0 | Base64 High Entropy String | https://docs.bridgecrew.io/docs/git_secrets_6 |
+
+---
 
-Our earlier smoke tests gave us some good assurances that we will catch issues
-with individual services, but only by testing one component of our deployment in
-isolation. In this section we introduce an example of slightly more rigorous
-testing. Ideally these tests would be maintained by the people who maintain the
-Sock Shop application code.
-
-Our new integration tests will load the front end and ensure that a particular
-section exists in that page content. Now we've guarded against more complicated
-failures such as the front end having no content but returning `200 OK`, or
-returning the wrong content.
-
-#### Following along
-
-You can run the integration tests locally, if you have all of the prerequisites
-installed:
-
-```terminal
-# Ensure that our cluster config is up to date so that we can communicate with
-# Kubernetes.
-make fetch-cluster-config
-
-# Run the integration tests from our local machine
-make integration-test
-```
-
-In this tag the integration tests are also run as part of the pipeline. To see
-them run automatically:
-
-```terminal
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-```
-
-...and look for the integration test job.
-
-### Record which versions work together
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/12-integration-test...13-record-versions)
-
-There are many ways to maintain a "bill of materials" that declares what is to
-be deployed and what is deployed at the moment. It's not quite true that we've
-been entirely declarative in our infrastructure and application deployments up
-to now. We're going to make sure that this repository contains specific version
-definitions for what is deployed right now.
-
-Our Kubernetes deployment manifest for Sock Shop has been referencing which
-images it needs by tag, for example `mongo:latest`. The image version that tags
-point to can be changed by the owner of the image. Indeed, some tags such as
-`latest` are _intended_ to be updated constantly. To be more confident in our
-deployment process being reproducible and idempotent, we'd like to make sure
-that the versions of images are not changing underneath us between deploys. This
-is achieved by referencing each image's SHA256, rather than their tags.
-
-For each image in the deployment manifest, we've updated the reference to the
-SHA256 of the image deployed at the moment.
-
-#### Following along
-
-You can run this test locally:
-
-```terminal
-# To ensure that we continue to reference images by SHA256, we've added conftest
-# to inspect deployment manifests and fail if it finds an image not referenced
-# by SHA256.
-make policy-test
-# Verify that the previous command exited successfully
-echo $?
-```
-
-You could try switching some of the versions to `latest` to see the test fail.
-
-Observe that the new Make target is also run by the latest version of the
-pipeline:
-
-```terminal
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-```
-
-...and look for the "Policy Test" job.
-
- This section is now concluded.
-
-### Parameterize differences between environments
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/13-record-versions...14-parameterise-environments)
-
-Until this commit, we've been assuming that there is only one environment: prod.
-One of the key benefits of IaC is that it becomes easy to create and destroy
-infrastructure. To unlock this power we need to make very little change to our
-repository.
-
-An environment variable, `TF_VAR_env_name`, has been introduced that will be
-used by Terraform to determine which environment it is to deploy.
-
-#### Following along
-
-```terminal
-# Configure the environment we're interacting with. Make targets will fail if
-# run without an environment configured.
-# You may instead store this in a `.envrc` file if using `direnv`.
-export TF_VAR_env_name=prod
-
-# Update the pipelines, and trigger a build to force Jenkins to notice the
-# change in tag.
-make jenkins-update-deploy-pipeline
-make jenkins-update-destroy-pipeline
-java -jar ${JENKINS_CLI} \
-  -s ${JENKINS_URL} \
-  -auth "${JENKINS_USERNAME}:${JENKINS_PASSWORD}" \
-  build 'Deploy (prod)'
-
-# Switch environments to "staging". Every operation is now run against a
-# different environment.
-export TF_VAR_env_name=staging
-
-# Create deploy and destroy pipelines for the staging environment. These new
-# pipelines will operate on "staging" and not interfere with "prod".
-make jenkins-create-deploy-pipeline
-make jenkins-create-destroy-pipeline
-```
-
-You can create as many environment as you like, the only limit is your budget!
-Simply changing `TF_VAR_env_name`'s value will achieve that. This section is now concluded.
-
-### Promote change
-
-* [See code changes](https://github.com/EngineerBetter/iac-example/compare/14-parameterise-environments...15-promote)
-
-Given how easy it is to create new environments now that they are parameterized,
-it is trivial to demonstrate another practice used in IaC: promotion.
-
-We've decided to use Git branches to implement promotion in Jenkins. When a
-deploy is successful, the branch called `passed_{env_name}` is rebased to the
-Git commit of what was just deployed. In practice we've created a `staging`
-environment and pipelines, and when a `staging` deploy is successful, it pushes
-the branch `passed_staging`. Our production environment is configured to deploy
-on change to the `passed_staging` branch and when successful, the `prod`
-pipeline pushes to `passed_prod`.
-
-So that knowledge of environment names exists outside of our heads, we've created
-an `environments.yml` file. The Make targets have been modified such that acting on an
-environment not referenced in that file will fail with a message explaining why.
-
-Each environment requires the `name` and `promotes_to` fields to be set in the
-`environments.yml` file. `promotes_to` is used to determine which branch to push
-_to_ when a deploy is successful. An optional `promotes_from` field may be set
-that determines which branch triggers the pipeline. It defaults to `main`.
-
-#### Notes
-
-Unfortunately the Jenkins Git plugin does not function correctly in declarative
-pipelines. A consequence of this is that we were unable to `git push` from our
-deploy pipelines. As a workaround we've configured the deploy pipeline to
-trigger a
-[freestyle project](https://docs.cloudbees.com/docs/admin-resources/latest/pipelines/learning-about-pipelines#_freestyle_projects)
-to perform `git push`.
-
-This made updating Jenkins pipelines a bit unwieldy since there are now at least
-three pipelines to set. As a convenience, `make jenkins-update-pipelines` and
-`make jenkins-create-pipelines` will set all pipelines for an environment.
-
-#### Following along
-
-```terminal
-# Remove the no-longer used environment variable. If using `direnv` then remove
-# it from your .envrc instead.
-unset TF_VAR_env_name
-
-# Use ENV_NAME to indicate which environment we're operating on. It must match
-# an environment referenced in environments.yml.
-# You may instead store this in a `.envrc` file if using `direnv`.
-export ENV_NAME=prod
-
-# Create the promotion pipeline used to promote change between environments.
-make jenkins-create-promote-pipeline
-
-# To move the tutorial on, make sure we instruct Jenkins to look at the source
-# code at this tag.
-make jenkins-update-pipelines
-
-# Update the staging pipelines too.
-export ENV_NAME=staging
-make jenkins-update-pipelines
-```
-
-This concludes this section. Feel free to push a trivial change and observe
-promotion in action. Pushes to `main` will trigger the staging pipeline, which
-will trigger the prod pipeline after success.
